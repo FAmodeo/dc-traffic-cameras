@@ -147,7 +147,9 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .tabbox li:hover span{text-decoration:underline;text-underline-offset:2px}
 .tb-row{display:flex;gap:.6rem;align-items:center;justify-content:space-between}
 .tb-row .tb-share{all:unset;font:700 .82rem/1 var(--f-display);padding:.5rem .85rem .42rem;border-radius:4px;background:var(--ink);color:var(--bg);cursor:pointer}
-.tb-row .tb-clear{all:unset;font-size:.72rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.tb-del{all:unset;flex:none;width:1.4rem;text-align:center;font:400 1.05rem/1 var(--f-display);color:var(--muted);cursor:pointer;border-radius:3px}
+.tb-del:hover{color:var(--ink);background:var(--bg)}
+.tb-del:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
 .tb-note{margin:.5rem 0 0;font-size:.7rem;color:var(--muted)}
 .pop-acts{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.15rem}
 .pop-got{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:.35rem;font:700 .78rem/1 var(--f-display);padding:.42rem .7rem .36rem;border-radius:999px;border:1.5px solid var(--red-ink);color:var(--red-ink);cursor:pointer}
@@ -1076,7 +1078,7 @@ function select(id, fromOutside) {
   const c = byId.get(id); if (!c) return;
   selRing.setAttribute('transform', `translate(${c.x} ${c.y})`); selRing.classList.remove('hide');
   wrap.querySelector('.pop')?.remove();
-  const pop = document.createElement('div'); pop.className = 'pop' + (CLICK_MODE === 'lens' ? ' lensmode' : ''); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Camera details');
+  const pop = document.createElement('div'); pop.className = 'pop' + (CLICK_MODE === 'lens' ? ' lensmode' : ''); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Camera details'); pop.dataset.id = c.id;
   const since = c.since ? new Date(c.since + 'T12:00').toLocaleDateString('en-US', {month:'short', year:'numeric'}) : null;
   const what = c.t === 'spd' && c.lim ? `<span class="limit">${c.lim}</span>` : '';
   const sub = [TYPES[c.t].name, STATS[c.s].name, `near ${c.hood}, Ward ${c.ward}`].concat(since ? [`since ${since}`] : []).concat(c.port ? ['portable'] : []);
@@ -1125,13 +1127,16 @@ function openTab(refresh) {
   const rows = Object.entries(TAB).map(([sl, k]) => [cams.find(x => slugOf(x.id) === sl), k]).filter(r => r[0]).sort((a, b) => b[1] - a[1]);
   const box = document.createElement('div'); box.className = 'tabbox'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Your tab');
   box.innerHTML = `<h3>Your DC camera tab</h3><p class="tb-sum">${n} ticket${n > 1 ? 's' : ''}, at least $${usd.toLocaleString('en-US')}</p>
-    <ol>${rows.map(([c, k]) => `<li data-id="${c.id}"><span>${c.loc}</span><b>×${k}</b></li>`).join('')}</ol>
-    <div class="tb-row"><button class="tb-share" type="button">Share my tab</button><button class="tb-clear" type="button">Clear</button></div>
+    <ol>${rows.map(([c, k]) => `<li data-id="${c.id}"><span>${c.loc}</span><b>×${k}</b><button class="tb-del" type="button" aria-label="Remove ${c.loc}">×</button></li>`).join('')}</ol>
+    <div class="tb-row"><button class="tb-share" type="button">Share my tab</button></div>
     <p class="tb-note">Saved on this device only. Amounts are the lowest fine for each camera type.</p>`;
   box.querySelectorAll('li').forEach(li => li.onclick = () => { box.remove(); select(li.dataset.id, false); });
   box.querySelector('.tb-share').onclick = e => share(e.currentTarget, {title:'My DC camera tab',
     text:`My DC traffic camera tab: ${n} ticket${n > 1 ? 's' : ''}, at least $${usd.toLocaleString('en-US')}. Which cameras got you?`, url:SITE_URL});
-  box.querySelector('.tb-clear').onclick = () => { if (confirm('Clear your tab on this device?')) { TAB = {}; setTab('', 0); box.remove(); wrap.querySelectorAll('.pop-got').forEach(b => { b.textContent = 'This one got me'; b.classList.remove('on'); }); wrap.querySelectorAll('.pop-less').forEach(b => b.hidden = true); } };
+  box.querySelectorAll('.tb-del').forEach(x => x.onclick = e => {   // remove one camera from the tab, no questions asked
+    e.stopPropagation(); const id = x.closest('li').dataset.id; setTab(slugOf(id), 0);
+    const pop = wrap.querySelector('.pop'); if (pop && pop.dataset.id === id) { const g = pop.querySelector('.pop-got'); g.textContent = 'This one got me'; g.classList.remove('on'); pop.querySelector('.pop-less').hidden = true; }
+  });
   wrap.appendChild(box);
 }
 tabBtn.onclick = () => openTab(false);

@@ -141,7 +141,9 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .tabbox li:hover span{text-decoration:underline;text-underline-offset:2px}
 .tb-row{display:flex;gap:.6rem;align-items:center;justify-content:space-between}
 .tb-row .tb-share{all:unset;font:700 .82rem/1 var(--f-display);padding:.5rem .85rem .42rem;border-radius:4px;background:var(--ink);color:var(--bg);cursor:pointer}
-.tb-row .tb-clear{all:unset;font-size:.72rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.tb-del{all:unset;flex:none;width:1.4rem;text-align:center;font:400 1.05rem/1 var(--f-display);color:var(--muted);cursor:pointer;border-radius:3px}
+.tb-del:hover{color:var(--ink);background:var(--bg)}
+.tb-del:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
 .tb-note{margin:.5rem 0 0;font-size:.7rem;color:var(--muted)}
 .pop-acts{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.15rem}
 .pop-got{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:.35rem;font:700 .78rem/1 var(--f-display);padding:.42rem .7rem .36rem;border-radius:999px;border:1.5px solid var(--red-ink);color:var(--red-ink);cursor:pointer}

@@ -516,7 +516,7 @@ function select(id, fromOutside) {
   const c = byId.get(id); if (!c) return;
   selRing.setAttribute('transform', `translate(${c.x} ${c.y})`); selRing.classList.remove('hide');
   wrap.querySelector('.pop')?.remove();
-  const pop = document.createElement('div'); pop.className = 'pop' + (CLICK_MODE === 'lens' ? ' lensmode' : ''); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Camera details');
+  const pop = document.createElement('div'); pop.className = 'pop' + (CLICK_MODE === 'lens' ? ' lensmode' : ''); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Camera details'); pop.dataset.id = c.id;
   const since = c.since ? new Date(c.since + 'T12:00').toLocaleDateString('en-US', {month:'short', year:'numeric'}) : null;
   const what = c.t === 'spd' && c.lim ? `<span class="limit">${c.lim}</span>` : '';
   const sub = [TYPES[c.t].name, STATS[c.s].name, `near ${c.hood}, Ward ${c.ward}`].concat(since ? [`since ${since}`] : []).concat(c.port ? ['portable'] : []);
@@ -565,13 +565,16 @@ function openTab(refresh) {
   const rows = Object.entries(TAB).map(([sl, k]) => [cams.find(x => slugOf(x.id) === sl), k]).filter(r => r[0]).sort((a, b) => b[1] - a[1]);
   const box = document.createElement('div'); box.className = 'tabbox'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Your tab');
   box.innerHTML = `<h3>Your DC camera tab</h3><p class="tb-sum">${n} ticket${n > 1 ? 's' : ''}, at least $${usd.toLocaleString('en-US')}</p>
-    <ol>${rows.map(([c, k]) => `<li data-id="${c.id}"><span>${c.loc}</span><b>×${k}</b></li>`).join('')}</ol>
-    <div class="tb-row"><button class="tb-share" type="button">Share my tab</button><button class="tb-clear" type="button">Clear</button></div>
+    <ol>${rows.map(([c, k]) => `<li data-id="${c.id}"><span>${c.loc}</span><b>×${k}</b><button class="tb-del" type="button" aria-label="Remove ${c.loc}">×</button></li>`).join('')}</ol>
+    <div class="tb-row"><button class="tb-share" type="button">Share my tab</button></div>
     <p class="tb-note">Saved on this device only. Amounts are the lowest fine for each camera type.</p>`;
   box.querySelectorAll('li').forEach(li => li.onclick = () => { box.remove(); select(li.dataset.id, false); });
   box.querySelector('.tb-share').onclick = e => share(e.currentTarget, {title:'My DC camera tab',
     text:`My DC traffic camera tab: ${n} ticket${n > 1 ? 's' : ''}, at least $${usd.toLocaleString('en-US')}. Which cameras got you?`, url:SITE_URL});
-  box.querySelector('.tb-clear').onclick = () => { if (confirm('Clear your tab on this device?')) { TAB = {}; setTab('', 0); box.remove(); wrap.querySelectorAll('.pop-got').forEach(b => { b.textContent = 'This one got me'; b.classList.remove('on'); }); wrap.querySelectorAll('.pop-less').forEach(b => b.hidden = true); } };
+  box.querySelectorAll('.tb-del').forEach(x => x.onclick = e => {   // remove one camera from the tab, no questions asked
+    e.stopPropagation(); const id = x.closest('li').dataset.id; setTab(slugOf(id), 0);
+    const pop = wrap.querySelector('.pop'); if (pop && pop.dataset.id === id) { const g = pop.querySelector('.pop-got'); g.textContent = 'This one got me'; g.classList.remove('on'); pop.querySelector('.pop-less').hidden = true; }
+  });
   wrap.appendChild(box);
 }
 tabBtn.onclick = () => openTab(false);
