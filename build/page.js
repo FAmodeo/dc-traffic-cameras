@@ -86,16 +86,25 @@ function countUp(node, to, f, ms = 1400) {   // final value is set first, so the
   const t0 = performance.now(), step = t => { const p = Math.min(1, (t - t0) / ms); node.textContent = f(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
-countUp(document.getElementById('hFines'), S.fines, big);
 countUp(document.getElementById('hUsd'), S.usd, v => '$' + big(v) + '+');
 countUp(document.getElementById('hTop'), busiest.n, v => Math.round(v).toLocaleString('en-US'));
 document.getElementById('hTopL').textContent = `fines at one camera: ${busiest.loc.split(',')[0].replace(/\s+\d.*$/, '')}`;
 document.getElementById('hSec').textContent = S.sec.toFixed(1);
 document.getElementById('ring').style.setProperty('--T', S.sec + 's');
-(function liveCount() {   // running total at the 12-month average rate, in step with the ring
-  const t0 = performance.now(), out = document.getElementById('hLive');
-  const tick = () => { out.textContent = Math.floor((performance.now() - t0) / 1000 / S.sec).toLocaleString('en-US'); };
-  setInterval(tick, 250); tick();
+const AVG = S.usd / S.fines;   // average fine at the lowest amount per type (~$106)
+(function liveCount() {   // fines and dollars since arrival at the 12-month average pace; both tick when the ring completes
+  const ring = document.getElementById('ring'), outN = document.getElementById('hLive'), outD = document.getElementById('hCash');
+  if (poster || cardmode) { outD.textContent = big(S.fines); document.getElementById('hCashL').textContent = 'fines a year'; return; }
+  ring.style.animation = 'none'; void ring.getBoundingClientRect(); ring.style.animation = '';   // restart the ring at t0
+  const t0 = performance.now(); let last = -1;
+  const tick = () => {
+    const k = Math.floor((performance.now() - t0) / 1000 / S.sec);
+    if (k === last) return; last = k;
+    outN.textContent = k.toLocaleString('en-US');
+    outD.textContent = '$' + Math.round(k * AVG).toLocaleString('en-US');
+    if (k > 0 && !calm) { outD.classList.remove('bump'); void outD.offsetWidth; outD.classList.add('bump'); }
+  };
+  setInterval(tick, 200); tick();
 })();
 (function sparkline() {
   const svg = document.getElementById('sSpark'), m = S.monthly, W = 200, H = 44, pad = 3;
@@ -350,7 +359,7 @@ function drawInset() {
   const nSpd = ic.filter(c => c.t === 'spd').length;
   document.getElementById('insetCap').textContent = `${ic.length} camera${ic.length === 1 ? '' : 's'} within 1.2 mi${nSpd ? `; badges show the speed limit` : ''}`;
 }
-hoodSel.onchange = () => { hood = hoods[+hoodSel.value]; try { localStorage.setItem('dcc-hood', hood.n); } catch (e) {} drawInset(); };
+hoodSel.onchange = () => { hood = hoods[+hoodSel.value]; try { localStorage.setItem('dcc-hood', hood.n); } catch (e) {} drawInset(); if (!calm) { inset.classList.remove('fade'); void inset.getBoundingClientRect(); inset.classList.add('fade'); } };
 try { const saved = localStorage.getItem('dcc-hood'), i = hoods.findIndex(h => h.n === saved); if (i > 0 && !poster) { hood = hoods[i]; hoodSel.value = i; } } catch (e) {}
 inset.addEventListener('click', e => { const t = e.target.closest('[data-id]'); if (t) select(t.dataset.id, true); });
 function setInsetScale() { const sc = (poster ? 1.9 : 1) / pxPerUnit(inset, {w:2 * HALF, h:2 * HALF}); if (Math.abs(sc - lastSc) > 1e-3) drawInset(); }
@@ -495,7 +504,7 @@ function applyFilter() {
 /* ---------- small print ---------- */
 const A = (href, t) => `<a href="${href}" target="_blank" rel="noopener">${t}</a>`;
 const src = `Data: DDOT Automated Safety Cameras and DC GIS, via ${A('https://opendata.dc.gov/datasets/automated-safety-cameras', 'Open Data DC')}, licensed ${A('https://creativecommons.org/licenses/by/4.0/', 'CC BY 4.0')}; adapted for this map. Cameras as of ${meta.asof}; fines through ${meta.last_record}. Fine amounts: ${A('https://ddot.dc.gov/page/dc-streetsafe-faqs', 'DDOT')}. * Fines DDOT logged in months a camera was live, ${meta.window}; dollars count each fine at its lowest amount ($100 speed or stop sign, $150 red light), a floor on fines issued, not money collected. Typeface: Overpass, SIL Open Font License.`;
-document.getElementById('sources').innerHTML = `<p>${src}</p>`;
+document.getElementById('sources').innerHTML = `<p>${src}</p><p class="note" id="counter-note"><b>How the live counters work.</b> DC's ${cams.length} mapped cameras issued ${S.fines.toLocaleString('en-US')} fines in ${meta.window}: one every ${S.sec.toFixed(1)} seconds on average. Each time the ring completes, the counters add one fine and $${AVG.toFixed(0)}, the average fine counted at the lowest amount for its type. Many fines are higher (speeding 16+ mph over costs $150–500), and fines issued are not the same as money collected. It is an average pace, not a live feed.</p>`;
 document.getElementById('posterfoot').innerHTML = src;
 if (meta.site.tip_url) {
   const tb = document.getElementById('tipBtn'); tb.href = meta.site.tip_url; tb.querySelector('span').textContent = meta.site.tip_label; tb.hidden = false;
