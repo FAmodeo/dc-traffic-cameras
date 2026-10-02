@@ -98,11 +98,8 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .ticket{margin-top:1.4rem;display:grid;grid-template-columns:minmax(0,1fr) 15rem;background:var(--land);border:1px solid var(--hair);border-left:5px solid var(--red);border-radius:6px;overflow:hidden}
 .tk-main{padding:1rem 1.3rem;min-width:0}
 .tk-kicker{font:600 .68rem var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
-.tk-title{margin:.3rem 0 .7rem;font-size:clamp(1.15rem,2.2vw,1.45rem);font-weight:800;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
-.tk-fields{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:.3rem 2rem;margin:0}
-.tk-fields div{min-width:0}
-.tk-fields dt{font:600 .62rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.tk-fields dd{margin:0;font:600 .9rem var(--f-mono);color:var(--ink)}
+.tk-sub{margin:0;color:var(--ink-2);font-size:.95rem}
+.tk-title{margin:.3rem 0 .25rem;font-size:clamp(1.15rem,2.2vw,1.45rem);font-weight:800;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
 .tk-stub{position:relative;display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:1rem 1.2rem;border-left:2px dashed var(--hair);background:color-mix(in srgb,var(--red) 6%,var(--land))}
 .tk-stub::before,.tk-stub::after{content:"";position:absolute;left:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:1px solid var(--hair)}
 .tk-stub::before{top:-9px}.tk-stub::after{bottom:-9px}
@@ -248,8 +245,7 @@ i.dot::before{content:"·";margin-inline:.4em}
   .ticket{grid-template-columns:minmax(0,1fr)}
   .tk-stub{border-left:0;border-top:2px dashed var(--hair)}
   .tk-stub::before,.tk-stub::after{display:none}
-  .tk-fields{grid-template-columns:repeat(2,auto)}
-  .explore{grid-template-columns:minmax(0,1fr)}
+    .explore{grid-template-columns:minmax(0,1fr)}
   .legend{border-right:0;border-bottom:1px solid var(--hair);padding:.8rem .9rem;gap:.6rem}
   .legend .block h2,.sizesb,.filt{display:none}
   .legend .keys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem}
@@ -315,7 +311,7 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
       <div class="eyebrow">Washington, DC<i class="dot"></i>updated monthly</div>
       <h1>DC Traffic Cameras</h1>
       <p class="dek">Every speed, red-light and stop-sign camera. Where it watches. How often it fines.</p>
-      <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true"></i><span>Pay a friendly fine</span></a></div>
+      <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true"></i><span>Chip in</span></a></div>
     </div>
     <div class="stamp" id="stamp"></div>
   </header>
@@ -353,18 +349,13 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
 
   <aside class="ticket" id="ticket" hidden aria-label="Tip jar">
     <div class="tk-main">
-      <div class="tk-kicker">Notice of Appreciation<i class="dot"></i>No. <span id="tkNo"></span></div>
-      <p class="tk-title">The only fine on this site you might enjoy paying.</p>
-      <dl class="tk-fields">
-        <div><dt>Violation</dt><dd>Studying all <span id="tkCams"></span> cameras</dd></div>
-        <div><dt>Fine</dt><dd>Any amount</dd></div>
-        <div><dt>Due</dt><dd>Whenever</dd></div>
-        <div><dt>Points</dt><dd>0</dd></div>
-      </dl>
+      <div class="tk-kicker">Saved you a ticket?</div>
+      <p class="tk-title">The cheapest one here is $100.</p>
+      <p class="tk-sub">A few dollars keeps this map free.</p>
     </div>
     <div class="tk-stub">
-      <a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Pay this fine</a>
-      <span>Tip jar. Keeps the map free, ad-free and updated.</span>
+      <a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Chip in</a>
+      <span>Free<i class="dot"></i>no ads<i class="dot"></i>no tracking</span>
     </div>
   </aside>
 

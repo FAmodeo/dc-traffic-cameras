@@ -429,9 +429,7 @@ document.getElementById('posterfoot').innerHTML = src;
 if (meta.site.tip_url) {
   const tb = document.getElementById('tipBtn'); tb.href = meta.site.tip_url; tb.querySelector('span').textContent = meta.site.tip_label; tb.hidden = false;
   const tk = document.getElementById('ticket'); document.getElementById('tkPay').href = meta.site.tip_url; tk.hidden = false;
-  document.getElementById('tkCams').textContent = cams.length;
-  document.getElementById('tkNo').textContent = 'DC-' + String(S.fines).slice(-6);   // a ticket number made from this year's fine count
-  const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Readers keep it running: ${A(meta.site.tip_url, meta.site.tip_label.toLowerCase())}.`; t.hidden = false;
+  const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
 if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method');
 
