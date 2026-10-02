@@ -40,7 +40,8 @@ html{font-size:15px}
 @media (prefers-reduced-motion:no-preference){
   html{scroll-behavior:smooth}
   .pop{animation:slidein .32s cubic-bezier(.2,.8,.2,1)}
-  .sharebox{animation:slidein .18s ease-out}
+  .sharebox,.tabbox{animation:slidein .18s ease-out}
+  .pop-got.bumped{animation:bump .6s ease-out}
   .ward.open .row.extra{animation:slidein .28s ease-out both}
   #inset.fade{animation:fadein .35s ease-out}
   .bump{animation:bump .7s ease-out}
@@ -113,7 +114,29 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 
 /* camera panel (opens on tap) */
 .pop{position:absolute;left:.7rem;bottom:.7rem;width:min(22rem,calc(100% - 1.4rem));max-height:calc(100% - 1.4rem);overflow:auto;background:var(--land);border:1px solid var(--hair);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:.85rem 1rem .75rem;display:flex;flex-direction:column;gap:.55rem;z-index:3}
-.home{position:absolute;top:.7rem;left:.7rem;z-index:2;font:700 .82rem/1 var(--f-display);padding:.55rem .85rem .47rem;border-radius:999px;border:1px solid var(--hair);background:var(--land);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .12);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .2s,transform .2s,visibility 0s .2s}
+.mapnav{position:absolute;top:.7rem;left:.7rem;z-index:2;display:flex;gap:.4rem;align-items:center}
+.tab{font:700 .82rem/1 var(--f-display);padding:.55rem .85rem .47rem;border-radius:999px;border:1.5px solid var(--red);background:var(--land);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .12)}
+.tab b{color:var(--red);margin-left:.25rem}
+.tab:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
+.tab[hidden]{display:none}
+.tabbox{position:absolute;top:3.2rem;left:.7rem;z-index:3;width:min(20rem,calc(100% - 1.4rem));max-height:calc(100% - 4rem);overflow:auto;background:var(--land);border:1px solid var(--hair);border-radius:8px;box-shadow:0 8px 24px rgb(0 0 0 / .16);padding:.85rem .95rem .7rem;font-size:.8rem}
+.tabbox h3{margin:0;font-size:1.05rem;font-weight:800}
+.tabbox .tb-sum{margin:.15rem 0 .5rem;color:var(--ink-2)}
+.tabbox ol{list-style:none;margin:0 0 .55rem;padding:0;border-top:1px solid var(--hair)}
+.tabbox li{display:flex;gap:.5rem;align-items:baseline;padding:.4rem 0;border-bottom:1px solid var(--hair);cursor:pointer}
+.tabbox li span{flex:1;min-width:0}
+.tabbox li b{font-family:var(--f-mono);font-weight:600}
+.tabbox li:hover span{text-decoration:underline;text-underline-offset:2px}
+.tb-row{display:flex;gap:.6rem;align-items:center;justify-content:space-between}
+.tb-row .tb-share{all:unset;font:700 .82rem/1 var(--f-display);padding:.5rem .85rem .42rem;border-radius:4px;background:var(--ink);color:var(--bg);cursor:pointer}
+.tb-row .tb-clear{all:unset;font-size:.72rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.tb-note{margin:.5rem 0 0;font-size:.7rem;color:var(--muted)}
+.pop-acts{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.15rem}
+.pop-got{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:.35rem;font:700 .78rem/1 var(--f-display);padding:.42rem .7rem .36rem;border-radius:999px;border:1.5px solid var(--red);color:var(--red);cursor:pointer}
+.pop-got.on{background:var(--red);color:#fff}
+.pop-got:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
+.pop-less{all:unset;font:700 .9rem/1 var(--f-display);color:var(--muted);cursor:pointer;padding:.2rem .35rem}
+.home{font:700 .82rem/1 var(--f-display);padding:.55rem .85rem .47rem;border-radius:999px;border:1px solid var(--hair);background:var(--land);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .12);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .2s,transform .2s,visibility 0s .2s}
 .home.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
 .home:hover{border-color:var(--ink-2)}
 .home:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
@@ -389,7 +412,7 @@ html.poster .facts{display:grid;gap:1.6rem;padding:0;border:0;grid-column:2;grid
 html.poster .inset{grid-column:3;grid-row:3}
 html.poster .wards{grid-column:3;grid-row:4}
 html.poster .ward .row,html.poster .more,html.poster .wards .sub{display:none}
-html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .home,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
+html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .home,html.poster .mapnav,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
 html.poster .page{position:relative}
 html.poster .posterfoot{display:block;position:absolute;left:90px;bottom:26px;width:1800px;font-size:.6rem}
 html.poster .hit b{font-size:2.3rem}
@@ -405,7 +428,7 @@ html.cardmode .hero{grid-column:1;grid-row:1;align-self:center;margin:0}
 html.cardmode .hero h1{font-size:4.2rem}
 html.cardmode .mapwrap{grid-column:2;grid-row:1;background:transparent}
 html.cardmode #map{height:534px}
-html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .home,html.cardmode .hint,html.cardmode .scale{display:none}
+html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .home,html.cardmode .mapnav,html.cardmode .hint,html.cardmode .scale{display:none}
 </style>
 
 <div class="page">
@@ -442,7 +465,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
     <div class="mapcol">
       <div class="mapwrap">
         <svg id="map" role="img" aria-label="Map of Washington DC with every automated traffic camera"></svg>
-        <button class="home" id="home" type="button"><span aria-hidden="true">←</span> Full map</button>
+        <div class="mapnav"><button class="tab" id="tabBtn" type="button" hidden aria-haspopup="dialog">Your tab <b id="tabN"></b></button><button class="home" id="home" type="button"><span aria-hidden="true">←</span> Full map</button></div>
         <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Show all of DC">◎</button></div>
         <div class="hint">Drag<i class="dot"></i><span id="hintZoom">pinch or Ctrl + scroll to zoom</span><i class="dot"></i>tap a camera</div>
         <div class="wtip" id="wtip" aria-hidden="true"><span></span></div>
