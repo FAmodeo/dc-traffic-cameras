@@ -112,6 +112,10 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 
 /* camera panel (opens on tap) */
 .pop{position:absolute;left:.7rem;bottom:.7rem;width:min(22rem,calc(100% - 1.4rem));max-height:calc(100% - 1.4rem);overflow:auto;background:var(--land);border:1px solid var(--hair);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:.85rem 1rem .75rem;display:flex;flex-direction:column;gap:.55rem;z-index:3}
+.home{position:absolute;top:.7rem;left:.7rem;z-index:2;font:700 .82rem/1 var(--f-display);padding:.55rem .85rem .47rem;border-radius:999px;border:1px solid var(--hair);background:var(--land);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .12);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .2s,transform .2s,visibility 0s .2s}
+.home.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.home:hover{border-color:var(--ink-2)}
+.home:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
 .pop-x{position:absolute;top:.3rem;right:.35rem;width:2rem;height:2rem;border:0;background:none;color:var(--ink-2);font:400 1.4rem/1 var(--f-display);cursor:pointer}
 .pop-x:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
 .pop-h{display:flex;gap:.55rem;align-items:center;padding-right:1.8rem}
@@ -376,7 +380,7 @@ html.poster .facts{display:grid;gap:1.6rem;padding:0;border:0;grid-column:2;grid
 html.poster .inset{grid-column:3;grid-row:3}
 html.poster .wards{grid-column:3;grid-row:4}
 html.poster .ward .row,html.poster .more,html.poster .wards .sub{display:none}
-html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
+html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .home,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
 html.poster .page{position:relative}
 html.poster .posterfoot{display:block;position:absolute;left:90px;bottom:26px;width:1800px;font-size:.6rem}
 html.poster .hit b{font-size:2.3rem}
@@ -392,7 +396,7 @@ html.cardmode .hero{grid-column:1;grid-row:1;align-self:center;margin:0}
 html.cardmode .hero h1{font-size:4.2rem}
 html.cardmode .mapwrap{grid-column:2;grid-row:1;background:transparent}
 html.cardmode #map{height:534px}
-html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .hint,html.cardmode .scale{display:none}
+html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .home,html.cardmode .hint,html.cardmode .scale{display:none}
 </style>
 
 <div class="page">
@@ -429,6 +433,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
     <div class="mapcol">
       <div class="mapwrap">
         <svg id="map" role="img" aria-label="Map of Washington DC with every automated traffic camera"></svg>
+        <button class="home" id="home" type="button"><span aria-hidden="true">←</span> Full map</button>
         <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Show all of DC">◎</button></div>
         <div class="hint">Drag<i class="dot"></i><span id="hintZoom">pinch or Ctrl + scroll to zoom</span><i class="dot"></i>tap a camera</div>
         <div class="wtip" id="wtip" aria-hidden="true"><span></span></div>

@@ -219,6 +219,7 @@ world.append(labels, capG, selRing);
 
 /* pan / zoom */
 let vb = {...FULL};
+const homeBtn = document.getElementById('home');
 const mk = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mk')) || 1;
 function pxPerUnit(svg, box) { const r = svg.getBoundingClientRect(); return Math.min(r.width / box.w, r.height / box.h); }
 function setVB() {
@@ -226,6 +227,7 @@ function setVB() {
   const k = pxPerUnit(map, vb), fit = Math.max(.5, Math.min(1, pxPerUnit(map, FULL) * FULL.h / 950)), z = Math.min(1.6 / fit, Math.pow(vb.w / FULL.w, -0.35));
   map.style.setProperty('--s', (mk() * fit * z / k).toFixed(4));
   map.style.setProperty('--sl', (mk() * Math.max(fit, .72) * Math.min(z, 1.3) / k).toFixed(4));
+  homeBtn?.classList.toggle('on', vb.w < FULL.w * .8);
   map.classList.toggle('near', vb.w < FULL.w / 3.5); map.classList.toggle('nearer', vb.w < FULL.w / 10);
   MKPX = mk() * fit * z; LBLPX = 8 * mk() * Math.max(fit, .72) * Math.min(z, 1.3);
   if (!dq) dq = requestAnimationFrame(declutter);
@@ -269,7 +271,8 @@ map.addEventListener('wheel', e => {
 map.addEventListener('dblclick', e => { const [ux, uy] = toUser(e); zoomAt(0.5, ux, uy); });
 document.getElementById('zin').onclick = () => zoomAt(0.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
 document.getElementById('zout').onclick = () => zoomAt(1 / 0.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
-document.getElementById('zfit').onclick = () => { vb = {...FULL}; setVB(); };
+document.getElementById('zfit').onclick = () => flyHome();
+document.getElementById('home').onclick = () => flyHome();
 
 /* ---------- neighbourhood close-up ---------- */
 const R = 120, HALF = 138;   // circle radius and half-view, map units (100 = 1 mile)
@@ -429,6 +432,19 @@ function flyTo(c) {   // smooth zoom to street level, camera kept clear of the p
     const p = Math.min(1, (t - t0) / T), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
     const ww = Math.exp(lw0 + (lw1 - lw0) * e), hh = ww * asp, cx = fc[0] + (tc[0] - fc[0]) * e, cy = fc[1] + (tc[1] - fc[1]) * e;
     vb = {x:cx - fx * ww, y:cy - fy * hh, w:ww, h:hh}; setVB();
+    if (p < 1) anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+function flyHome() {   // glide back to the whole city and close any camera panel
+  closePop(); cancelAnimationFrame(anim);
+  const from = {...vb}, to = {...FULL};
+  if (calm) { vb = to; setVB(); return; }
+  const t0 = performance.now(), T = 600, c0 = [from.x + from.w / 2, from.y + from.h / 2], c1 = [to.x + to.w / 2, to.y + to.h / 2];
+  const step = t => {
+    const p = Math.min(1, (t - t0) / T), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    const w = Math.exp(Math.log(from.w) + (Math.log(to.w) - Math.log(from.w)) * e), h = Math.exp(Math.log(from.h) + (Math.log(to.h) - Math.log(from.h)) * e);
+    vb = {x:c0[0] + (c1[0] - c0[0]) * e - w / 2, y:c0[1] + (c1[1] - c0[1]) * e - h / 2, w, h}; setVB();
     if (p < 1) anim = requestAnimationFrame(step);
   };
   anim = requestAnimationFrame(step);

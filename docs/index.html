@@ -118,6 +118,10 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 
 /* camera panel (opens on tap) */
 .pop{position:absolute;left:.7rem;bottom:.7rem;width:min(22rem,calc(100% - 1.4rem));max-height:calc(100% - 1.4rem);overflow:auto;background:var(--land);border:1px solid var(--hair);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:.85rem 1rem .75rem;display:flex;flex-direction:column;gap:.55rem;z-index:3}
+.home{position:absolute;top:.7rem;left:.7rem;z-index:2;font:700 .82rem/1 var(--f-display);padding:.55rem .85rem .47rem;border-radius:999px;border:1px solid var(--hair);background:var(--land);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .12);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .2s,transform .2s,visibility 0s .2s}
+.home.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.home:hover{border-color:var(--ink-2)}
+.home:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
 .pop-x{position:absolute;top:.3rem;right:.35rem;width:2rem;height:2rem;border:0;background:none;color:var(--ink-2);font:400 1.4rem/1 var(--f-display);cursor:pointer}
 .pop-x:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
 .pop-h{display:flex;gap:.55rem;align-items:center;padding-right:1.8rem}
@@ -382,7 +386,7 @@ html.poster .facts{display:grid;gap:1.6rem;padding:0;border:0;grid-column:2;grid
 html.poster .inset{grid-column:3;grid-row:3}
 html.poster .wards{grid-column:3;grid-row:4}
 html.poster .ward .row,html.poster .more,html.poster .wards .sub{display:none}
-html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
+html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .home,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
 html.poster .page{position:relative}
 html.poster .posterfoot{display:block;position:absolute;left:90px;bottom:26px;width:1800px;font-size:.6rem}
 html.poster .hit b{font-size:2.3rem}
@@ -398,7 +402,7 @@ html.cardmode .hero{grid-column:1;grid-row:1;align-self:center;margin:0}
 html.cardmode .hero h1{font-size:4.2rem}
 html.cardmode .mapwrap{grid-column:2;grid-row:1;background:transparent}
 html.cardmode #map{height:534px}
-html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .hint,html.cardmode .scale{display:none}
+html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .home,html.cardmode .hint,html.cardmode .scale{display:none}
 </style>
 
 <div class="page">
@@ -435,6 +439,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
     <div class="mapcol">
       <div class="mapwrap">
         <svg id="map" role="img" aria-label="Map of Washington DC with every automated traffic camera"></svg>
+        <button class="home" id="home" type="button"><span aria-hidden="true">←</span> Full map</button>
         <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Show all of DC">◎</button></div>
         <div class="hint">Drag<i class="dot"></i><span id="hintZoom">pinch or Ctrl + scroll to zoom</span><i class="dot"></i>tap a camera</div>
         <div class="wtip" id="wtip" aria-hidden="true"><span></span></div>
@@ -724,6 +729,7 @@ world.append(labels, capG, selRing);
 
 /* pan / zoom */
 let vb = {...FULL};
+const homeBtn = document.getElementById('home');
 const mk = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mk')) || 1;
 function pxPerUnit(svg, box) { const r = svg.getBoundingClientRect(); return Math.min(r.width / box.w, r.height / box.h); }
 function setVB() {
@@ -731,6 +737,7 @@ function setVB() {
   const k = pxPerUnit(map, vb), fit = Math.max(.5, Math.min(1, pxPerUnit(map, FULL) * FULL.h / 950)), z = Math.min(1.6 / fit, Math.pow(vb.w / FULL.w, -0.35));
   map.style.setProperty('--s', (mk() * fit * z / k).toFixed(4));
   map.style.setProperty('--sl', (mk() * Math.max(fit, .72) * Math.min(z, 1.3) / k).toFixed(4));
+  homeBtn?.classList.toggle('on', vb.w < FULL.w * .8);
   map.classList.toggle('near', vb.w < FULL.w / 3.5); map.classList.toggle('nearer', vb.w < FULL.w / 10);
   MKPX = mk() * fit * z; LBLPX = 8 * mk() * Math.max(fit, .72) * Math.min(z, 1.3);
   if (!dq) dq = requestAnimationFrame(declutter);
@@ -774,7 +781,8 @@ map.addEventListener('wheel', e => {
 map.addEventListener('dblclick', e => { const [ux, uy] = toUser(e); zoomAt(0.5, ux, uy); });
 document.getElementById('zin').onclick = () => zoomAt(0.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
 document.getElementById('zout').onclick = () => zoomAt(1 / 0.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
-document.getElementById('zfit').onclick = () => { vb = {...FULL}; setVB(); };
+document.getElementById('zfit').onclick = () => flyHome();
+document.getElementById('home').onclick = () => flyHome();
 
 /* ---------- neighbourhood close-up ---------- */
 const R = 120, HALF = 138;   // circle radius and half-view, map units (100 = 1 mile)
@@ -934,6 +942,19 @@ function flyTo(c) {   // smooth zoom to street level, camera kept clear of the p
     const p = Math.min(1, (t - t0) / T), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
     const ww = Math.exp(lw0 + (lw1 - lw0) * e), hh = ww * asp, cx = fc[0] + (tc[0] - fc[0]) * e, cy = fc[1] + (tc[1] - fc[1]) * e;
     vb = {x:cx - fx * ww, y:cy - fy * hh, w:ww, h:hh}; setVB();
+    if (p < 1) anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+function flyHome() {   // glide back to the whole city and close any camera panel
+  closePop(); cancelAnimationFrame(anim);
+  const from = {...vb}, to = {...FULL};
+  if (calm) { vb = to; setVB(); return; }
+  const t0 = performance.now(), T = 600, c0 = [from.x + from.w / 2, from.y + from.h / 2], c1 = [to.x + to.w / 2, to.y + to.h / 2];
+  const step = t => {
+    const p = Math.min(1, (t - t0) / T), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    const w = Math.exp(Math.log(from.w) + (Math.log(to.w) - Math.log(from.w)) * e), h = Math.exp(Math.log(from.h) + (Math.log(to.h) - Math.log(from.h)) * e);
+    vb = {x:c0[0] + (c1[0] - c0[0]) * e - w / 2, y:c0[1] + (c1[1] - c0[1]) * e - h / 2, w, h}; setVB();
     if (p < 1) anim = requestAnimationFrame(step);
   };
   anim = requestAnimationFrame(step);
