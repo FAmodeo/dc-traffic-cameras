@@ -1,0 +1,38 @@
+# Monthly refresh: re-download DDOT and DC GIS data, rebuild docs/index.html, commit.
+# build.py refuses to publish implausible data (too few cameras, stale fines, broken street matching),
+# so a bad month fails the job and the site keeps its last good version.
+name: Monthly data refresh
+on:
+  schedule:
+    - cron: '23 9 12 * *'   # 12th of each month, 09:23 UTC; DDOT posts the previous month's fines around the 10th
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: refresh
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Fetch data
+        run: |
+          python build/fetch_cameras.py
+          python build/fetch_basemap.py
+      - name: Build page
+        run: python build/build.py
+      - name: Check camera positions against the street network
+        run: python build/check_accuracy.py > /dev/null && head -1 accuracy_check.csv
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs accuracy_check.csv
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Monthly data refresh $(date -u +%Y-%m-%d)"
+          git push
