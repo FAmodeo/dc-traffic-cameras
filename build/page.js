@@ -531,18 +531,52 @@ function select(id, fromOutside) {
       <div><b>${rk ? '#' + rk : '—'}</b><span>of ${cams.length} cameras</span></div>
     </div>
     ${c.n ? `<div class="pop-bars"></div><div class="pop-cap"><span>${monthName(meta.months[0])}</span><span>fines per month</span><span>${monthName(meta.months[meta.months.length - 1])}</span></div>` : ''}
-    <button class="pop-share" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Share this camera</button>`;
+    <div class="pop-acts"><span><button class="pop-got" type="button"></button><button class="pop-less" type="button" aria-label="Remove one" hidden>−</button></span><button class="pop-share" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Share this camera</button></div>`;
   pop.querySelector('.pg').appendChild(mini(c.t, c.s, 7));
   if (c.n) pop.querySelector('.pop-bars').appendChild(bars(c));
   pop.querySelector('.pop-x').onclick = closePop;
   pop.querySelector('.pop-share').onclick = e => share(e.currentTarget, {title:`${c.loc} · DC Traffic Cameras`,
     text:c.n ? `This camera on ${c.loc} issued ${fmt(c.n)} fines in 12 months, one every ${ev}. #${rk} of ${cams.length} in DC.` : `${TYPES[c.t].name} camera on ${c.loc}, not fining yet.`,
     url:`${SITE_URL}c/${slugOf(c.id)}/`});
+  const got = pop.querySelector('.pop-got'), less = pop.querySelector('.pop-less'), sl = slugOf(c.id);
+  const paint = () => { const k = TAB[sl] || 0; got.textContent = k ? `Got me${k > 1 ? ' ×' + k : ''} ✓` : 'This one got me'; got.classList.toggle('on', !!k); less.hidden = !k; };
+  got.onclick = () => { setTab(sl, (TAB[sl] || 0) + 1); paint(); got.classList.remove('bumped'); void got.offsetWidth; got.classList.add('bumped'); };
+  less.onclick = () => { setTab(sl, (TAB[sl] || 0) - 1); paint(); };
+  paint();
   if (!poster && !cardmode && CLICK_MODE === 'zoom') history.replaceState(null, '', '#cam-' + slugOf(c.id));
   wrap.appendChild(pop);
   if (CLICK_MODE === 'lens') drawLens(pop.querySelector('.lens'), c); else flyTo(c);
   if (fromOutside) wrap.scrollIntoView({behavior:calm ? 'auto' : 'smooth', block:'start'});
 }
+// "your tab": tickets a visitor says a camera gave them; kept in this browser only, never sent anywhere
+const TAB_KEY = 'dctc-tab', FINE = {spd:100, red:150, stp:100};
+let TAB = {}; try { TAB = JSON.parse(localStorage.getItem(TAB_KEY)) || {}; } catch (err) {}
+const tabBtn = document.getElementById('tabBtn');
+function tabSum() { let n = 0, usd = 0; for (const [sl, k] of Object.entries(TAB)) { const c = cams.find(x => slugOf(x.id) === sl); if (!c) continue; n += k; usd += k * (FINE[c.t] || 100); } return {n, usd}; }
+function setTab(sl, k) { if (k > 0) TAB[sl] = k; else delete TAB[sl]; try { localStorage.setItem(TAB_KEY, JSON.stringify(TAB)); } catch (err) {} paintTab(); }
+function paintTab() {
+  const {n, usd} = tabSum(); tabBtn.hidden = !n || poster || cardmode;
+  document.getElementById('tabN').textContent = n ? `${n} · $${usd.toLocaleString('en-US')}+` : '';
+  if (wrap.querySelector('.tabbox')) openTab(true);
+}
+function openTab(refresh) {
+  const old = wrap.querySelector('.tabbox'); if (old) { old.remove(); if (!refresh) return; }
+  const {n, usd} = tabSum(); if (!n) return;
+  const rows = Object.entries(TAB).map(([sl, k]) => [cams.find(x => slugOf(x.id) === sl), k]).filter(r => r[0]).sort((a, b) => b[1] - a[1]);
+  const box = document.createElement('div'); box.className = 'tabbox'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Your tab');
+  box.innerHTML = `<h3>Your DC camera tab</h3><p class="tb-sum">${n} ticket${n > 1 ? 's' : ''}, at least $${usd.toLocaleString('en-US')}</p>
+    <ol>${rows.map(([c, k]) => `<li data-id="${c.id}"><span>${c.loc}</span><b>×${k}</b></li>`).join('')}</ol>
+    <div class="tb-row"><button class="tb-share" type="button">Share my tab</button><button class="tb-clear" type="button">Clear</button></div>
+    <p class="tb-note">Saved on this device only. Amounts are the lowest fine for each camera type.</p>`;
+  box.querySelectorAll('li').forEach(li => li.onclick = () => { box.remove(); select(li.dataset.id, false); });
+  box.querySelector('.tb-share').onclick = e => share(e.currentTarget, {title:'My DC camera tab',
+    text:`My DC traffic camera tab: ${n} ticket${n > 1 ? 's' : ''}, at least $${usd.toLocaleString('en-US')}. Which cameras got you?`, url:SITE_URL});
+  box.querySelector('.tb-clear').onclick = () => { if (confirm('Clear your tab on this device?')) { TAB = {}; setTab('', 0); box.remove(); wrap.querySelectorAll('.pop-got').forEach(b => { b.textContent = 'This one got me'; b.classList.remove('on'); }); wrap.querySelectorAll('.pop-less').forEach(b => b.hidden = true); } };
+  wrap.appendChild(box);
+}
+tabBtn.onclick = () => openTab(false);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') wrap.querySelector('.tabbox')?.remove(); });
+paintTab();
 function closePop() { if (!wrap.querySelector('.pop')) return; wrap.querySelector('.pop').remove(); selRing.classList.add('hide'); closeShare(); if (location.hash.startsWith('#cam-')) history.replaceState(null, '', location.pathname + location.search); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 function applyFilter() {

@@ -269,7 +269,7 @@ ranked = sorted((c for c in recs if c['n']), key=lambda c: -c['n']); rank = {c['
 def pace(n):
     m = 365.25 * 1440 / n
     return f'{max(1, round(m))} min' if m < 60 else f'{round(m / 60)} h' if m < 2880 else f'{round(m / 1440)} days'
-KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stop': 'Stop-sign camera'}
+KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stp': 'Stop-sign camera'}
 for c in recs:
     slug = c['id'].replace(' ', '').lower(); go = f'../../#cam-{slug}'
     title = f"{c['loc']}: {c['n']:,} fines in a year" if c['n'] else f"{KIND.get(c['t'], 'Camera')}, {c['loc']}"
