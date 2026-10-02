@@ -511,7 +511,8 @@ if (meta.site.tip_url) {
   const tk = document.getElementById('ticket'); document.getElementById('tkPay').href = meta.site.tip_url; tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
-if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method');
+if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url ? ' · ' + A(meta.site.feedback_url, 'Suggest a fix or an idea') : '');
+if (meta.site.feedback_url) { const sg = document.getElementById('suggest'); sg.href = meta.site.feedback_url; sg.hidden = false; }
 
 function layout() { if (poster) document.documentElement.style.setProperty('--mk', 2.2); if (cardmode) document.documentElement.style.setProperty('--mk', 1.5); setVB(); setInsetScale(); }
 new ResizeObserver(layout).observe(map); new ResizeObserver(setInsetScale).observe(inset);

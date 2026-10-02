@@ -1,0 +1,29 @@
+name: Suggestion
+description: A missing camera, a wrong spot, or an idea for the map.
+title: "Suggestion: "
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for looking closely. Everything posted here is public, so leave out personal details such as plates or addresses."
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is it about?
+      options:
+        - A camera is missing
+        - A camera is in the wrong place or has wrong details
+        - An idea for the site
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where? (optional)
+      description: Street and cross street, or the camera's ID from its panel (e.g. ATE 0885).
+  - type: textarea
+    id: details
+    attributes:
+      label: Tell us
+    validations:
+      required: true
