@@ -252,6 +252,7 @@ OUT.parent.mkdir(exist_ok=True)
 tpl = open(HERE / 'template.html').read().replace('/*__SCRIPT__*/', open(HERE / 'page.js').read())
 page = tpl.replace('/*__DATA__*/null', json.dumps(payload, separators=(',', ':'))) \
           .replace('/*__BASEMAP__*/null', json.dumps(basemap, separators=(',', ':')))
+page = page.replace('__SITE_URL__', SITE['site_url'])
 page = page.replace('__OG_IMAGE__', (SITE['site_url'].rstrip('/') + '/' if SITE['site_url'] else '') + 'og-card.png')
 # public site: a complete HTML document; artifact copy: the bare fragment (the artifact host adds its own skeleton)
 GF = re.compile(r'<link rel="preconnect" href="https://fonts\.googleapis\.com">\n<link rel="preconnect" href="https://fonts\.gstatic\.com" crossorigin>\n<link rel="stylesheet" href="https://fonts\.googleapis\.com/[^"]+">')
