@@ -3,5 +3,7 @@
   "repo_url": "https://github.com/famodeo/dc-traffic-cameras",
   "tip_url": "https://buy.stripe.com/7sYeVffEe5yugh61PJ4ow00",
   "tip_label": "Chip in",
-  "feedback_url": "https://github.com/famodeo/dc-traffic-cameras/issues/new?template=suggestion.yml"
+  "feedback_url": "https://github.com/famodeo/dc-traffic-cameras/issues/new?template=suggestion.yml",
+  "note_form": "",
+  "note_entry": ""
 }

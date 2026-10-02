@@ -258,7 +258,14 @@ map.addEventListener('pointermove', e => {
 const up = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = null; if (!ptrs.size) map.classList.remove('drag'); };
 map.addEventListener('pointerup', e => { if (moved < 6 && ptrs.size === 1 && downId) select(downId, false); up(e); });
 map.addEventListener('pointercancel', up);
-map.addEventListener('wheel', e => { e.preventDefault(); const [ux, uy] = toUser(e); zoomAt(Math.exp(e.deltaY * 0.0022), ux, uy); }, {passive:false});
+// wheel zooms only with Ctrl/⌘ held (trackpad pinch arrives as ctrl+wheel); a plain wheel scrolls the page
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent), KEY = MAC ? '⌘' : 'Ctrl';
+document.getElementById('hintZoom').textContent = `pinch or ${KEY} + scroll to zoom`;
+const wtip = document.getElementById('wtip'); wtip.firstChild.textContent = `Hold ${KEY} and scroll to zoom`; let wtT;
+map.addEventListener('wheel', e => {
+  if (!e.ctrlKey && !e.metaKey) { wtip.classList.add('on'); clearTimeout(wtT); wtT = setTimeout(() => wtip.classList.remove('on'), 1100); return; }
+  e.preventDefault(); wtip.classList.remove('on'); const [ux, uy] = toUser(e); zoomAt(Math.exp(e.deltaY * 0.0022), ux, uy);
+}, {passive:false});
 map.addEventListener('dblclick', e => { const [ux, uy] = toUser(e); zoomAt(0.5, ux, uy); });
 document.getElementById('zin').onclick = () => zoomAt(0.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
 document.getElementById('zout').onclick = () => zoomAt(1 / 0.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
@@ -511,8 +518,26 @@ if (meta.site.tip_url) {
   const tk = document.getElementById('ticket'); document.getElementById('tkPay').href = meta.site.tip_url; tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
-if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url ? ' · ' + A(meta.site.feedback_url, 'Suggest a fix or an idea') : '');
-if (meta.site.feedback_url) { const sg = document.getElementById('suggest'); sg.href = meta.site.feedback_url; sg.hidden = false; }
+if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
+// suggestion box: with a Google Form configured, notes post in place (no account, no redirect); else the GitHub form
+(function suggest() {
+  const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');
+  const txt = document.getElementById('sgText'), done = document.getElementById('sgDone'), send = document.getElementById('sgSend');
+  const inline = !!(S2.note_form && S2.note_entry);
+  if (!inline && !S2.feedback_url) return;
+  box.hidden = false;
+  const show = on => { form.hidden = !on; box.classList.toggle('open', on); open.setAttribute('aria-expanded', on); if (on) { done.hidden = true; txt.focus({preventScroll:true}); } };
+  open.onclick = () => inline ? show(form.hidden) : window.open(S2.feedback_url, '_blank', 'noopener');
+  const fl = document.getElementById('footSuggest');
+  if (fl) fl.onclick = e => { if (!inline) return; e.preventDefault(); box.scrollIntoView({block:'center'}); show(true); };
+  form.onsubmit = async e => {
+    e.preventDefault(); const v = txt.value.trim(); if (!v) return;
+    send.disabled = true; send.textContent = 'Sending…';
+    try { if (!document.getElementById('sgWeb').value) await fetch(S2.note_form, {method:'POST', mode:'no-cors', body:new URLSearchParams({[S2.note_entry]:v})}); }
+    catch (err) { send.disabled = false; send.textContent = 'Retry'; return; }
+    txt.value = ''; send.disabled = false; send.textContent = 'Send'; form.hidden = true; box.classList.remove('open'); open.setAttribute('aria-expanded', false); done.hidden = false;
+  };
+})();
 
 function layout() { if (poster) document.documentElement.style.setProperty('--mk', 2.2); if (cardmode) document.documentElement.style.setProperty('--mk', 1.5); setVB(); setInsetScale(); }
 new ResizeObserver(layout).observe(map); new ResizeObserver(setInsetScale).observe(inset);
