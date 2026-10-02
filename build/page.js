@@ -117,12 +117,37 @@ const AVG = S.usd / S.fines;   // average fine at the lowest amount per type (~$
   m.forEach((d, i) => { const h = el('rect', {x:x(i) - (W / m.length) / 2, y:0, width:W / m.length, height:H, fill:'transparent'}, svg); el('title', {}, h).textContent = `${monthName(d[0])}: ${d[1].toLocaleString('en-US')} fines`; });
   document.getElementById('sSparkL').textContent = `fines per month, ${monthName(m[0][0])}–${monthName(last[0])}`;
 })();
-document.getElementById('share').onclick = async e => {
-  const b = e.currentTarget, url = meta.site.site_url || location.href.split('#')[0];
-  try { if (navigator.share) { await navigator.share({title:'DC Traffic Cameras', url}); return; } await navigator.clipboard.writeText(url); b.textContent = 'Link copied'; }
-  catch (err) { b.textContent = url; }
-  setTimeout(() => { b.textContent = 'Share'; }, 2500);
-};
+// sharing: the phone's own share sheet where there is one; elsewhere a small menu (copy link + five services)
+const ranked0 = cams.reduce((a, c) => (c.n || 0) > (a.n || 0) ? c : a, cams[0]);
+const SITE_URL = meta.site.site_url || location.href.split('#')[0];
+const slugOf = id => id.replace(/\s+/g, '').toLowerCase();
+let shareBox = null;
+function closeShare() { shareBox?.remove(); shareBox = null; }
+async function share(anchor, d) {
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share(d); } catch (err) {} return; }
+  if (shareBox) { const same = shareBox.anchor === anchor; closeShare(); if (same) return; }
+  const u = encodeURIComponent(d.url), t = encodeURIComponent(d.text), both = encodeURIComponent(d.text + ' ' + d.url);
+  const box = shareBox = document.createElement('div'); box.className = 'sharebox'; box.anchor = anchor; box.setAttribute('role', 'menu');
+  box.innerHTML = `<button type="button" class="sb-copy">Copy link</button>
+    <a href="https://wa.me/?text=${both}">WhatsApp</a><a href="https://x.com/intent/tweet?text=${t}&url=${u}">X</a>
+    <a href="https://www.reddit.com/submit?url=${u}&title=${encodeURIComponent(d.title)}">Reddit</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=${u}">Facebook</a>
+    <a href="mailto:?subject=${encodeURIComponent(d.title)}&body=${encodeURIComponent(d.text + '\n\n' + d.url)}">Email</a>`;
+  box.querySelectorAll('a').forEach(a => { if (!a.href.startsWith('mailto')) { a.target = '_blank'; a.rel = 'noopener'; } a.onclick = () => setTimeout(closeShare, 0); });
+  box.querySelector('.sb-copy').onclick = async ev => {
+    const btn = ev.currentTarget;
+    try { await navigator.clipboard.writeText(d.url); btn.textContent = 'Copied ✓'; } catch (err) { btn.textContent = d.url; }
+    setTimeout(closeShare, 1400);
+  };
+  document.body.appendChild(box);
+  const r = anchor.getBoundingClientRect(), bw = box.offsetWidth, bh = box.offsetHeight;
+  const left = Math.max(8, Math.min(r.left, innerWidth - bw - 8)), up = (anchor.closest('.pop') || r.bottom + bh + 8 > innerHeight) && r.top > bh + 8;
+  box.style.left = left + scrollX + 'px'; box.style.top = (up ? r.top - bh - 6 : r.bottom + 6) + scrollY + 'px';
+}
+document.addEventListener('click', e => { if (shareBox && !shareBox.contains(e.target) && !shareBox.anchor.contains(e.target)) closeShare(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeShare(); });
+document.getElementById('share').onclick = e => share(e.currentTarget, {title:'DC Traffic Cameras',
+  text:`Every speed, red-light and stop-sign camera in DC, and how often each one fines. The busiest one issued ${fmt(ranked0.n)} fines in a year.`, url:SITE_URL});
 const count = f => cams.filter(f).length;
 function keyRow(host, k, info, glyphEl, n) {
   const b = document.createElement('button'); b.className = 'key'; b.type = 'button'; b.setAttribute('aria-pressed', on[k]); b.id = 'key-' + k;
@@ -505,15 +530,20 @@ function select(id, fromOutside) {
       <div><b>${ev ? '1 / ' + ev : '—'}</b><span>${ev ? 'on average' : c.s === 'live' ? 'no fines logged' : 'not fining yet'}</span></div>
       <div><b>${rk ? '#' + rk : '—'}</b><span>of ${cams.length} cameras</span></div>
     </div>
-    ${c.n ? `<div class="pop-bars"></div><div class="pop-cap"><span>${monthName(meta.months[0])}</span><span>fines per month</span><span>${monthName(meta.months[meta.months.length - 1])}</span></div>` : ''}`;
+    ${c.n ? `<div class="pop-bars"></div><div class="pop-cap"><span>${monthName(meta.months[0])}</span><span>fines per month</span><span>${monthName(meta.months[meta.months.length - 1])}</span></div>` : ''}
+    <button class="pop-share" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Share this camera</button>`;
   pop.querySelector('.pg').appendChild(mini(c.t, c.s, 7));
   if (c.n) pop.querySelector('.pop-bars').appendChild(bars(c));
   pop.querySelector('.pop-x').onclick = closePop;
+  pop.querySelector('.pop-share').onclick = e => share(e.currentTarget, {title:`${c.loc} · DC Traffic Cameras`,
+    text:c.n ? `This camera on ${c.loc} issued ${fmt(c.n)} fines in 12 months, one every ${ev}. #${rk} of ${cams.length} in DC.` : `${TYPES[c.t].name} camera on ${c.loc}, not fining yet.`,
+    url:`${SITE_URL}c/${slugOf(c.id)}/`});
+  if (!poster && !cardmode && CLICK_MODE === 'zoom') history.replaceState(null, '', '#cam-' + slugOf(c.id));
   wrap.appendChild(pop);
   if (CLICK_MODE === 'lens') drawLens(pop.querySelector('.lens'), c); else flyTo(c);
   if (fromOutside) wrap.scrollIntoView({behavior:calm ? 'auto' : 'smooth', block:'start'});
 }
-function closePop() { wrap.querySelector('.pop')?.remove(); selRing.classList.add('hide'); }
+function closePop() { if (!wrap.querySelector('.pop')) return; wrap.querySelector('.pop').remove(); selRing.classList.add('hide'); closeShare(); if (location.hash.startsWith('#cam-')) history.replaceState(null, '', location.pathname + location.search); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 function applyFilter() {
   for (const c of cams) {
@@ -561,3 +591,4 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site
 function layout() { if (poster) document.documentElement.style.setProperty('--mk', 2.2); if (cardmode) document.documentElement.style.setProperty('--mk', 1.5); setVB(); setInsetScale(); }
 new ResizeObserver(layout).observe(map); new ResizeObserver(setInsetScale).observe(inset);
 applyFilter(); layout();
+{ const m = location.hash.match(/^#cam-([a-z0-9]+)$/), c = m && cams.find(k => slugOf(k.id) === m[1]); if (c) requestAnimationFrame(() => select(c.id, true)); }

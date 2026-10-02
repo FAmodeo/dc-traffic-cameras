@@ -261,6 +261,28 @@ OUT.write_text('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8"
                '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
                '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>\n'
                '</head>\n<body>\n' + public + '\n</body>\n</html>\n')
+# one tiny page per camera, so a shared link unfurls with that camera's numbers (crawlers ignore #hashes); humans bounce to the map
+import html as _h, shutil
+CDIR = OUT.parent / 'c'; shutil.rmtree(CDIR, ignore_errors=True)
+site = SITE['site_url'].rstrip('/') + '/' if SITE['site_url'] else ''
+ranked = sorted((c for c in recs if c['n']), key=lambda c: -c['n']); rank = {c['id']: i + 1 for i, c in enumerate(ranked)}
+def pace(n):
+    m = 365.25 * 1440 / n
+    return f'{max(1, round(m))} min' if m < 60 else f'{round(m / 60)} h' if m < 2880 else f'{round(m / 1440)} days'
+KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stop': 'Stop-sign camera'}
+for c in recs:
+    slug = c['id'].replace(' ', '').lower(); go = f'../../#cam-{slug}'
+    title = f"{c['loc']}: {c['n']:,} fines in a year" if c['n'] else f"{KIND.get(c['t'], 'Camera')}, {c['loc']}"
+    desc = (f"{KIND.get(c['t'], 'Camera')}, one fine every {pace(c['n'])} on average. #{rank[c['id']]} of {len(recs)} DC cameras. "
+            if c['n'] else 'Not fining yet. ') + 'Every speed, red-light and stop-sign camera in DC, on one map.'
+    d = CDIR / slug; d.mkdir(parents=True)
+    (d / 'index.html').write_text(
+        f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8">\n<title>{_h.escape(title)} · DC Traffic Cameras</title>\n'
+        f'<meta name="description" content="{_h.escape(desc)}">\n<meta property="og:title" content="{_h.escape(title)}">\n'
+        f'<meta property="og:description" content="{_h.escape(desc)}">\n<meta property="og:type" content="website">\n'
+        f'<meta property="og:url" content="{site}c/{slug}/">\n<meta property="og:image" content="{site}og-card.png">\n'
+        f'<meta name="twitter:card" content="summary_large_image">\n<meta http-equiv="refresh" content="0;url={go}">\n'
+        f'<script>location.replace("{go}")</script>\n</head><body><p><a href="{go}">{_h.escape(c["loc"])}: open on the map</a></p></body></html>\n')
 if '--artifact' in sys.argv: (HERE.parent / 'dc_traffic_cameras.html').write_text(page)   # private preview copy only
 print(f'{OUT.name}: {len(page)/1e6:.2f} MB, {len(recs)} cameras, max distance {meta["maxd"]} mi, window {meta["window"]}')
 print('unmapped', unmapped, '| last record', meta['last_record'], '| fines 12m', f"{stats['fines']:,}", '| every', stats['sec'], 's | floor $', f"{stats['usd']:,}")
