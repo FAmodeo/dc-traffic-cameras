@@ -237,8 +237,8 @@ function zoomAt(f, cx, cy) {
   vb = {x:cx - (cx - vb.x) * s, y:cy - (cy - vb.y) * s, w:vb.w * s, h:vb.h * s}; setVB();
 }
 function toUser(e) { const r = map.getBoundingClientRect(), k = pxPerUnit(map, vb), ox = (r.width - vb.w * k) / 2, oy = (r.height - vb.h * k) / 2; return [vb.x + (e.clientX - r.left - ox) / k, vb.y + (e.clientY - r.top - oy) / k]; }
-const ptrs = new Map(); let moved = 0, pinch0 = null;
-map.addEventListener('pointerdown', e => { map.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } map.classList.add('drag'); });
+const ptrs = new Map(); let moved = 0, pinch0 = null, downId = null;   // downId: camera under the finger at touch start (capture retargets later events)
+map.addEventListener('pointerdown', e => { downId = ptrs.size ? null : e.target.closest?.('[data-id]')?.dataset.id ?? null; map.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); } map.classList.add('drag'); });
 map.addEventListener('pointermove', e => {
   if (!ptrs.has(e.pointerId)) return;
   const prev = ptrs.get(e.pointerId), k = pxPerUnit(map, vb);
@@ -247,7 +247,7 @@ map.addEventListener('pointermove', e => {
   if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch0) { const [ux, uy] = toUser({clientX:(a[0] + b[0]) / 2, clientY:(a[1] + b[1]) / 2}); zoomAt(pinch0 / d, ux, uy); } pinch0 = d; moved += 10; }
 });
 const up = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = null; if (!ptrs.size) map.classList.remove('drag'); };
-map.addEventListener('pointerup', e => { if (moved < 6 && ptrs.size === 1) { const t = e.target.closest && e.target.closest('[data-id]'); if (t) select(t.dataset.id, false); } up(e); });
+map.addEventListener('pointerup', e => { if (moved < 6 && ptrs.size === 1 && downId) select(downId, false); up(e); });
 map.addEventListener('pointercancel', up);
 map.addEventListener('wheel', e => { e.preventDefault(); const [ux, uy] = toUser(e); zoomAt(Math.exp(e.deltaY * 0.0022), ux, uy); }, {passive:false});
 map.addEventListener('dblclick', e => { const [ux, uy] = toUser(e); zoomAt(0.5, ux, uy); });
@@ -352,10 +352,10 @@ function drawInset() {
 }
 hoodSel.onchange = () => { hood = hoods[+hoodSel.value]; try { localStorage.setItem('dcc-hood', hood.n); } catch (e) {} drawInset(); };
 try { const saved = localStorage.getItem('dcc-hood'), i = hoods.findIndex(h => h.n === saved); if (i > 0 && !poster) { hood = hoods[i]; hoodSel.value = i; } } catch (e) {}
-inset.addEventListener('click', e => { const t = e.target.closest('[data-id]'); if (t) select(t.dataset.id, false); });
+inset.addEventListener('click', e => { const t = e.target.closest('[data-id]'); if (t) select(t.dataset.id, true); });
 function setInsetScale() { const sc = (poster ? 1.9 : 1) / pxPerUnit(inset, {w:2 * HALF, h:2 * HALF}); if (Math.abs(sc - lastSc) > 1e-3) drawInset(); }
 
-/* ---------- by ward: top 5 per ward, expandable ---------- */
+/* ---------- by ward: top 3 per ward, expandable ---------- */
 const WARDS = [...new Set(cams.map(c => c.ward))].filter(Boolean).sort();
 const wardHost = document.getElementById('wards'), rowEls = new Map(), wardEls = [];
 const recent = d => d && (new Date(meta.asof_iso) - new Date(d)) / 864e5 <= 92;
@@ -367,7 +367,7 @@ for (const w of WARDS) {
     const r = document.createElement('div'); r.className = 'row'; r.tabIndex = 0; r.dataset.id = c.id;
     const g = document.createElement('span'); g.appendChild(mini(c.t, c.s));
     const what = c.t === 'spd' && c.lim ? `<span class="limit">${c.lim}</span>` : `<span class="ttype">${TYPES[c.t].name}</span>`;
-    const tags = (c.s !== 'live' ? `<span class="tag">${c.s === 'warn' ? 'warning' : 'not live'}</span>` : '') + (recent(c.since) ? '<span class="tag">new</span>' : '') + (c.port ? '<span class="tag">portable</span>' : '') + (c.off ? '<span class="tag">position approx.</span>' : '');
+    const tags = (c.s !== 'live' ? `<span class="tag">${c.s === 'warn' ? 'warning' : 'not live'}</span>` : '') + (recent(c.since) ? '<span class="tag">new</span>' : '') + (c.port ? '<span class="tag">portable</span>' : '');
     r.appendChild(g);
     r.insertAdjacentHTML('beforeend', `<span class="l">${c.loc}${tags}<small class="nb">near ${c.hood}</small></span><span class="t">${what}</span><span class="n">${fmt(c.n)}</span>`);
     r.onclick = () => select(c.id, true); r.onkeydown = e => { if (e.key === 'Enter') select(c.id, true); };
@@ -383,35 +383,106 @@ function wardRefresh() {
   for (const W of wardEls) {
     const v = W.band.filter(vis), open = W.box.classList.contains('open');
     W.box.classList.toggle('hide', !v.length);
-    v.forEach((c, i) => rowEls.get(c.id).classList.toggle('extra', i >= 5));
+    v.forEach((c, i) => rowEls.get(c.id).classList.toggle('extra', i >= 3));
     W.svg.innerHTML = ''; W.svg.setAttribute('viewBox', `0 0 ${mx} 10`);
     let x = 0;
     for (const t in TYPES) { const n = v.filter(c => c.t === t).length; if (!n) continue; el('rect', {x, y:0, width:Math.max(n - .35, .3), height:10, fill:`var(--${t})`}, W.svg); x += n; }
     W.wn.textContent = `${v.length} cameras · ${big(v.reduce((a, c) => a + (c.n || 0), 0))} fines`;
-    W.more.hidden = v.length <= 5;
-    W.more.textContent = open ? 'Show top 5' : `Show all ${v.length}`;
+    W.more.hidden = v.length <= 3;
+    W.more.textContent = open ? 'Show top 3' : `Show all ${v.length}`;
   }
 }
 
 /* ---------- selection + filters ---------- */
 const byId = new Map(cams.map(c => [c.id, c]));
-function select(id, fly) {
+const CLICK_MODE = location.hash === '#lens' ? 'lens' : 'zoom';   // 'zoom' flies the map in; 'lens' magnifies in the panel
+const ranked = cams.filter(c => c.n).sort((a, b) => b.n - a.n), rankOf = new Map(ranked.map((c, i) => [c.id, i + 1]));
+const wrap = map.closest('.mapwrap');
+const every = n => { if (!n) return null; const m = 365.25 * 1440 / n; return m < 60 ? `${Math.max(1, Math.round(m))} min` : m < 2880 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} days`; };
+let anim = 0;
+function flyTo(c) {   // smooth zoom to street level, camera kept clear of the panel
+  const r = map.getBoundingClientRect(), narrow = r.width < 700, asp = r.height / r.width;
+  const w = FULL.w / 14, h = w * asp, fx = narrow ? .5 : .62, fy = narrow ? .27 : .42;
+  const to = {x:c.x - fx * w, y:c.y - fy * h, w, h}, from = {...vb};
+  if (Math.abs(from.h / from.w - asp) > 1e-3) { const cy = from.y + from.h / 2; from.h = from.w * asp; from.y = cy - from.h / 2; }
+  cancelAnimationFrame(anim);
+  if (calm) { vb = to; setVB(); return; }
+  const t0 = performance.now(), T = 650, lw0 = Math.log(from.w), lw1 = Math.log(to.w);
+  const fc = [from.x + from.w * fx, from.y + from.h * fy], tc = [c.x, c.y];
+  const step = t => {
+    const p = Math.min(1, (t - t0) / T), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    const ww = Math.exp(lw0 + (lw1 - lw0) * e), hh = ww * asp, cx = fc[0] + (tc[0] - fc[0]) * e, cy = fc[1] + (tc[1] - fc[1]) * e;
+    vb = {x:cx - fx * ww, y:cy - fy * hh, w:ww, h:hh}; setVB();
+    if (p < 1) anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+function drawLens(svg, c) {   // magnified street-level view around one camera, drawn in its own small SVG
+  const HW = 24, px = svg.getBoundingClientRect().width || 220, sc = 2 * HW / px;
+  svg.setAttribute('viewBox', `${c.x - HW} ${c.y - HW} ${2 * HW} ${2 * HW}`); svg.style.setProperty('--s', sc.toFixed(4));
+  const cid = 'lens' + Math.random().toString(36).slice(2, 7), defs = el('defs', {}, svg);
+  el('circle', {cx:c.x, cy:c.y, r:HW - .5}, el('clipPath', {id:cid}, defs));
+  const g = el('g', {'clip-path':`url(#${cid})`}, svg);
+  el('rect', {x:c.x - HW, y:c.y - HW, width:2 * HW, height:2 * HW, fill:'var(--land)'}, g);
+  el('path', {d:BASE.parks, fill:'var(--park)'}, g); el('path', {d:BASE.water, fill:'var(--water)'}, g);
+  el('path', {d:BASE.local, fill:'none', stroke:'var(--road)', 'stroke-width':1.6, 'vector-effect':'non-scaling-stroke'}, g);
+  el('path', {d:BASE.min + BASE.art, fill:'none', stroke:'var(--road)', 'stroke-width':2.6, 'vector-effect':'non-scaling-stroke'}, g);
+  el('path', {d:BASE.fwy, fill:'none', stroke:'var(--road-fwy)', 'stroke-width':3.4, 'vector-effect':'non-scaling-stroke'}, g);
+  const nearby = cams.filter(o => vis(o) && Math.abs(o.x - c.x) < HW * 1.3 && Math.abs(o.y - c.y) < HW * 1.3);
+  for (const o of nearby) if (o.st) { streak(g, o, 7).setAttribute('stroke-opacity', o.id === c.id ? .6 : .35); chevron(g, o); }
+  const taken = [];
+  for (const a of DATA.anchors) {
+    if (taken.length >= 5 || Math.hypot(a[0] - c.x, a[1] - c.y) > HW * .8 || taken.some(t => t[3] === a[3] || Math.hypot(t[0] - a[0], t[1] - a[1]) < HW * .35)) continue;
+    taken.push(a);
+    el('text', {class:'cs lbl', 'text-anchor':'middle', y:-3, 'font-size':9, 'font-style':'italic', fill:'var(--ink-2)'}, el('g', {transform:`translate(${a[0]} ${a[1]}) rotate(${a[2]})`}, g)).textContent = a[3];
+  }
+  for (const o of nearby) {
+    const inner = el('g', {class:'cs'}, el('g', {transform:`translate(${o.x} ${o.y})`}, g));
+    if (o.t === 'spd' && o.lim) { const [ux, uy] = heading(o); badge(el('g', {transform:`translate(${(ux * 9).toFixed(1)} ${(uy * 9).toFixed(1)}) scale(1.25)`}, inner), o); }
+    else glyph(inner, o.t, o.s, 5);
+  }
+  el('circle', {cx:c.x, cy:c.y, r:HW - .5, fill:'none', stroke:'var(--edge)', 'stroke-width':1, 'vector-effect':'non-scaling-stroke'}, svg);
+}
+function bars(c) {   // 12 monthly bars for one camera, one hue, faint baseline, latest month emphasised
+  const m = c.m || [], mx = Math.max(1, ...m), W = 240, H = 46, bw = W / m.length;
+  const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Fines per month, ${meta.months[0]} to ${meta.months[meta.months.length - 1]}`);
+  el('line', {x1:0, x2:W, y1:H - .5, y2:H - .5, stroke:'var(--hair)', 'stroke-width':1, 'vector-effect':'non-scaling-stroke'}, svg);
+  m.forEach((v, i) => {
+    const h = v ? Math.max(1.5, (H - 4) * v / mx) : 0;
+    el('rect', {x:i * bw + 1.5, y:H - h, width:bw - 3, height:h, rx:1.5, fill:`var(--${c.t})`, 'fill-opacity':i === m.length - 1 ? 1 : .55}, svg);
+    el('title', {}, el('rect', {x:i * bw, y:0, width:bw, height:H, fill:'transparent'}, svg)).textContent = `${monthName(meta.months[i])}: ${v.toLocaleString('en-US')} fines`;
+  });
+  return svg;
+}
+function select(id, fromOutside) {
   const c = byId.get(id); if (!c) return;
   selRing.setAttribute('transform', `translate(${c.x} ${c.y})`); selRing.classList.remove('hide');
-  const lim = c.t === 'spd' && c.lim ? `${c.lim} mph limit, ` : '';
-  const since = c.since ? new Date(c.since + 'T12:00').toLocaleDateString('en-US', {month:'short', year:'numeric'}) : '—';
-  const card = document.getElementById('card'); card.innerHTML = '';
-  const g = document.createElement('span'); g.appendChild(mini(c.t, c.s, 7)); g.firstChild.setAttribute('width', '2rem'); g.firstChild.setAttribute('height', '2rem');
-  card.appendChild(g);
-  const bits = [TYPES[c.t].name, lim + STATS[c.s].name.toLowerCase() + (c.raw === 'Test' ? ' (testing)' : ''), 'near ' + c.hood + ', Ward ' + c.ward, 'since ' + since];
-  if (c.port) bits.push('portable unit');
-  if (c.off) bits.push("DDOT's map position doesn't match the street it names");
-  card.insertAdjacentHTML('beforeend', `<div><div class="loc">${c.loc}</div><div class="sub">${bits.join('<i class="dot"></i>')}</div></div><div class="big"><b>${fmt(c.n)}</b><span>fines, last 12 months</span></div>`);
-  if (fly) {
-    const w = FULL.w / 12; vb = {x:c.x - w / 2, y:c.y - (w * FULL.h / FULL.w) / 2, w, h:w * FULL.h / FULL.w}; setVB();
-    map.closest('.mapwrap').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
-  }
+  wrap.querySelector('.pop')?.remove();
+  const pop = document.createElement('div'); pop.className = 'pop' + (CLICK_MODE === 'lens' ? ' lensmode' : ''); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Camera details');
+  const since = c.since ? new Date(c.since + 'T12:00').toLocaleDateString('en-US', {month:'short', year:'numeric'}) : null;
+  const what = c.t === 'spd' && c.lim ? `<span class="limit">${c.lim}</span>` : '';
+  const sub = [TYPES[c.t].name, STATS[c.s].name, `near ${c.hood}, Ward ${c.ward}`].concat(since ? [`since ${since}`] : []).concat(c.port ? ['portable'] : []);
+  const ev = every(c.n), rk = rankOf.get(c.id);
+  pop.innerHTML = `<button class="pop-x" type="button" aria-label="Close">×</button>
+    ${CLICK_MODE === 'lens' ? '<svg class="lens" aria-hidden="true"></svg>' : ''}
+    <div class="pop-h"><span class="pg"></span><b>${c.loc}</b>${what}</div>
+    <div class="pop-sub">${sub.join('<i class="dot"></i>')}</div>
+    <div class="pop-stats">
+      <div><b>${c.n ? fmt(c.n) : '0'}</b><span>fines, 12 months</span></div>
+      <div><b>${ev ? '1 / ' + ev : '—'}</b><span>${ev ? 'on average' : c.s === 'live' ? 'no fines logged' : 'not fining yet'}</span></div>
+      <div><b>${rk ? '#' + rk : '—'}</b><span>of ${cams.length} cameras</span></div>
+    </div>
+    ${c.n ? `<div class="pop-bars"></div><div class="pop-cap"><span>${monthName(meta.months[0])}</span><span>fines per month</span><span>${monthName(meta.months[meta.months.length - 1])}</span></div>` : ''}`;
+  pop.querySelector('.pg').appendChild(mini(c.t, c.s, 7));
+  if (c.n) pop.querySelector('.pop-bars').appendChild(bars(c));
+  pop.querySelector('.pop-x').onclick = closePop;
+  wrap.appendChild(pop);
+  if (CLICK_MODE === 'lens') drawLens(pop.querySelector('.lens'), c); else flyTo(c);
+  if (fromOutside) wrap.scrollIntoView({behavior:calm ? 'auto' : 'smooth', block:'start'});
 }
+function closePop() { wrap.querySelector('.pop')?.remove(); selRing.classList.add('hide'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 function applyFilter() {
   for (const c of cams) {
     const v = vis(c); markEls.get(c.id).classList.toggle('hide', !v); rowEls.get(c.id).classList.toggle('hide', !v);
@@ -436,4 +507,3 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site
 function layout() { if (poster) document.documentElement.style.setProperty('--mk', 2.2); if (cardmode) document.documentElement.style.setProperty('--mk', 1.5); setVB(); setInsetScale(); }
 new ResizeObserver(layout).observe(map); new ResizeObserver(setInsetScale).observe(inset);
 applyFilter(); layout();
-if (!poster && !cardmode) select(busiest.id, false);

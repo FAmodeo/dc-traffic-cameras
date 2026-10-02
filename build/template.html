@@ -91,6 +91,23 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .total span{color:var(--ink-2);line-height:1.2;font-size:.85rem}
 .split{display:flex;flex-wrap:wrap;gap:.2rem .8rem;font-size:.8rem;color:var(--ink-2);margin-top:-.4rem}
 
+/* camera panel (opens on tap) */
+.pop{position:absolute;left:.7rem;bottom:.7rem;width:min(22rem,calc(100% - 1.4rem));max-height:calc(100% - 1.4rem);overflow:auto;background:var(--land);border:1px solid var(--hair);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:.85rem 1rem .75rem;display:flex;flex-direction:column;gap:.55rem;z-index:3}
+.pop-x{position:absolute;top:.3rem;right:.35rem;width:2rem;height:2rem;border:0;background:none;color:var(--ink-2);font:400 1.4rem/1 var(--f-display);cursor:pointer}
+.pop-x:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
+.pop-h{display:flex;gap:.55rem;align-items:center;padding-right:1.8rem}
+.pop-h b{font-size:.98rem;font-weight:800;line-height:1.2;flex:1;min-width:0}
+.pop-h .pg svg{width:1.6rem;height:1.6rem;display:block}
+.pop-sub{font-size:.76rem;color:var(--ink-2);line-height:1.4}
+.pop-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;border-block:1px solid var(--hair);padding:.55rem 0}
+.pop-stats b{display:block;font-size:1.2rem;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pop-stats span{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pop-bars svg{display:block;width:100%;height:2.8rem}
+.pop-cap{display:flex;justify-content:space-between;font:600 .62rem var(--f-mono);color:var(--muted);margin-top:-.25rem}
+.pop .lens{display:block;width:min(100%,14rem);aspect-ratio:1;align-self:center}
+.pop .lens .lbl{paint-order:stroke;stroke:var(--land);stroke-width:3px}
+@media (max-width:700px){.pop{left:.45rem;right:.45rem;bottom:.45rem;width:auto;max-height:64%;padding:.75rem .85rem .6rem}.pop.lensmode{max-height:calc(100% - .9rem)}.pop .lens{width:min(100%,11rem)}}
+
 /* tip: hero button + ticket-stub card */
 .btn.tip{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid var(--red);background:transparent}
 .btn.tip i{width:.5rem;height:.5rem;border-radius:50%;background:var(--red)}
@@ -343,7 +360,6 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
         <div class="hint">Drag<i class="dot"></i>pinch or scroll to zoom<i class="dot"></i>tap a camera</div>
         <div class="scale" id="scale" aria-label="Map scale"></div>
       </div>
-      <div class="card" id="card" aria-live="polite"></div>
     </div>
   </main>
 
@@ -351,7 +367,7 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
     <div class="tk-main">
       <div class="tk-kicker">Saved you a ticket?</div>
       <p class="tk-title">The cheapest in DC is $100.</p>
-      <p class="tk-sub">A few dollars keeps this map free.</p>
+      <p class="tk-sub">99¢ keeps this map free.</p>
     </div>
     <div class="tk-stub">
       <a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Chip in</a>
@@ -381,7 +397,7 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
     </section>
     <section class="wards">
       <h2 class="sec">By ward</h2>
-      <p class="sub">Busiest cameras first<i class="dot"></i>fines in the last 12 months</p>
+      <p class="sub">Top 3 per ward<i class="dot"></i>fines in the last 12 months</p>
       <div id="wards"></div>
       <div class="posterfoot" id="posterfoot"></div>
     </section>

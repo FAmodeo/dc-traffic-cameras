@@ -78,6 +78,7 @@ w_end = last_record.to_period('M')                     # current (partial) month
 w_months = [str(w_end - i) for i in range(12, 0, -1)]  # 12 complete months
 fines = mon[mon.YEAR_MONTH.isin(w_months) & (mon.CAMERA_STATUS == 'Live')]   # status is recorded per month; warning/idle/test months are not fines
 t12 = fines.groupby('ENFORCEMENT_SPACE_CODE').NUM_VIOLATIONS.sum()
+by_month = fines.groupby(['ENFORCEMENT_SPACE_CODE', 'YEAR_MONTH']).NUM_VIOLATIONS.sum()   # per-camera monthly series
 cams['t12'] = cams.ENFORCEMENT_SPACE_CODE.map(t12)
 
 DIRS = {'N': 'northbound', 'S': 'southbound', 'E': 'eastbound', 'W': 'westbound', 'NE': 'northeast-bound',
@@ -118,6 +119,7 @@ for r in cams.itertuples():
     recs.append(dict(id=r.ENFORCEMENT_SPACE_CODE, x=round(x, 1), y=round(y, 1), t=TYPE[r.ENFORCEMENT_TYPE],
                      s=STAT.get(r.CAMERA_STATUS, 'soon'), raw=r.CAMERA_STATUS, lim=int(r.SPEED_LIMIT) if pd.notna(r.SPEED_LIMIT) else None,
                      loc=pretty(r.LOCATION_DESCRIPTION), n=int(r.t12) if pd.notna(r.t12) else None,
+                     m=[int(by_month.get((r.ENFORCEMENT_SPACE_CODE, mo), 0)) for mo in w_months],
                      since=r.START_DATE.strftime('%Y-%m-%d') if pd.notna(r.START_DATE) else None,
                      port=r.DEVICE_MOBILITY == 'Portable', ward=r.WARD, d=round(math.hypot(x, y) / U, 2), st=st,
                      off=not sn['matched'] or (sn['dist'] or 0) > 30))
@@ -141,7 +143,7 @@ stats = dict(fines=int(total), sec=round(365.25 * 86400 / total, 1), usd=int(sum
 
 fetched = dt.date.fromisoformat(json.load(open(DATA / 'fetched.json'))['fetched'])
 meta = dict(asof=fetched.strftime('%-d %b %Y'), asof_iso=fetched.isoformat(), last_record=last_record.strftime('%-d %b %Y'),
-            window=f"{pd.Period(w_months[0]).strftime('%b %Y')} – {pd.Period(w_months[-1]).strftime('%b %Y')}",
+            months=w_months, window=f"{pd.Period(w_months[0]).strftime('%b %Y')} – {pd.Period(w_months[-1]).strftime('%b %Y')}",
             unmapped=unmapped, maxd=max(c['d'] for c in recs), stats=stats, site=SITE)
 
 # Orientation labels (approximate centroids) — [lon, lat, text, kind]
