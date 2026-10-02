@@ -593,7 +593,7 @@ function applyFilter() {
 
 /* ---------- small print ---------- */
 const A = (href, t) => `<a href="${href}" target="_blank" rel="noopener">${t}</a>`;
-const src = `Data: DDOT Automated Safety Cameras and DC GIS, via ${A('https://opendata.dc.gov/datasets/automated-safety-cameras', 'Open Data DC')}, licensed ${A('https://creativecommons.org/licenses/by/4.0/', 'CC BY 4.0')}; adapted for this map. Cameras as of ${meta.asof}; fines through ${meta.last_record}. Fine amounts: ${A('https://ddot.dc.gov/page/dc-streetsafe-faqs', 'DDOT')}. * Fines DDOT logged in months a camera was live, ${meta.window}; dollars count each fine at its lowest amount ($100 speed or stop sign, $150 red light), a floor on fines issued, not money collected. Typeface: Overpass, SIL Open Font License.`;
+const src = `Data: DDOT Automated Safety Cameras and DC GIS, via ${A('https://opendata.dc.gov/datasets/automated-safety-cameras', 'Open Data DC')}, licensed ${A('https://creativecommons.org/licenses/by/4.0/', 'CC BY 4.0')}; adapted for this map. Cameras as of ${meta.asof}; fines through ${meta.last_record}. Fine amounts: ${A('https://ddot.dc.gov/page/dc-streetsafe-faqs', 'DDOT')}. * Fines DDOT logged in months a camera was live, ${meta.window}; dollars count each fine at its lowest amount ($100 speed or stop sign, $150 red light), a floor on fines issued, not money collected. Typeface: Overpass, SIL Open Font License.${meta.site.goatcounter ? ' Visits are counted with GoatCounter, without cookies or personal data.' : ''}`;
 document.getElementById('sources').innerHTML = `<p>${src}</p><p class="note" id="counter-note"><b>How the live counters work.</b> DC's ${cams.length} mapped cameras issued ${S.fines.toLocaleString('en-US')} fines in ${meta.window}: one every ${S.sec.toFixed(1)} seconds on average. Each time the ring completes, the counters add one fine and $${AVG.toFixed(0)}, the average fine counted at the lowest amount for its type. Many fines are higher (speeding 16+ mph over costs $150–500), and fines issued are not the same as money collected. It is an average pace, not a live feed.</p>`;
 document.getElementById('posterfoot').innerHTML = src;
 if (meta.site.tip_url) {
@@ -629,3 +629,12 @@ function layout() { if (poster) document.documentElement.style.setProperty('--mk
 new ResizeObserver(layout).observe(map); new ResizeObserver(setInsetScale).observe(inset);
 applyFilter(); layout();
 { const m = location.hash.match(/^#cam-([a-z0-9]+)$/), c = m && cams.find(k => slugOf(k.id) === m[1]); if (c) requestAnimationFrame(() => select(c.id, true)); }
+// visit count (GoatCounter, cookieless): one request per page view, only on the live site; a shared camera link counts
+// as c/<id> so its shares show up. Open the site once with #nocount to stop counting that browser (#count undoes it).
+(function count() {
+  const code = meta.site.goatcounter; if (!code || poster || cardmode) return;
+  try { if (location.hash === '#nocount') localStorage.setItem('dctc-nocount', '1'); if (location.hash === '#count') localStorage.removeItem('dctc-nocount'); if (localStorage.getItem('dctc-nocount')) return; } catch (err) {}
+  if (!meta.site.site_url || location.host !== new URL(meta.site.site_url).host) return;
+  const m = location.hash.match(/^#cam-([a-z0-9]+)$/), q = new URLSearchParams({p:m ? `/c/${m[1]}` : '/', t:document.title, r:document.referrer, s:`${screen.width},${screen.height},${devicePixelRatio}`, rnd:Math.random().toString(36).slice(2)});
+  new Image().src = `https://${code}.goatcounter.com/count?${q}`;
+})();
