@@ -426,8 +426,13 @@ const A = (href, t) => `<a href="${href}" target="_blank" rel="noopener">${t}</a
 const src = `Data: DDOT Automated Safety Cameras and DC GIS, via ${A('https://opendata.dc.gov/datasets/automated-safety-cameras', 'Open Data DC')}, licensed ${A('https://creativecommons.org/licenses/by/4.0/', 'CC BY 4.0')}; adapted for this map. Cameras as of ${meta.asof}; fines through ${meta.last_record}. Fine amounts: ${A('https://ddot.dc.gov/page/dc-streetsafe-faqs', 'DDOT')}. * Fines DDOT logged in months a camera was live, ${meta.window}; dollars count each fine at its lowest amount ($100 speed or stop sign, $150 red light), a floor on fines issued, not money collected. Typeface: Overpass, SIL Open Font License.`;
 document.getElementById('sources').innerHTML = `<p>${src}</p>`;
 document.getElementById('posterfoot').innerHTML = src;
-if (meta.site.tip_url) { const tb = document.getElementById('tipBtn'); tb.href = meta.site.tip_url; tb.textContent = meta.site.tip_label; tb.hidden = false; }
-if (meta.site.tip_url) { const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. If it saved you a fine, ${A(meta.site.tip_url, meta.site.tip_label.toLowerCase())}.`; t.hidden = false; }
+if (meta.site.tip_url) {
+  const tb = document.getElementById('tipBtn'); tb.href = meta.site.tip_url; tb.querySelector('span').textContent = meta.site.tip_label; tb.hidden = false;
+  const tk = document.getElementById('ticket'); document.getElementById('tkPay').href = meta.site.tip_url; tk.hidden = false;
+  document.getElementById('tkCams').textContent = cams.length;
+  document.getElementById('tkNo').textContent = 'DC-' + String(S.fines).slice(-6);   // a ticket number made from this year's fine count
+  const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Readers keep it running: ${A(meta.site.tip_url, meta.site.tip_label.toLowerCase())}.`; t.hidden = false;
+}
 if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method');
 
 function layout() { if (poster) document.documentElement.style.setProperty('--mk', 2.2); if (cardmode) document.documentElement.style.setProperty('--mk', 1.5); setVB(); setInsetScale(); }
