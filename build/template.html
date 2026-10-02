@@ -44,7 +44,7 @@ html{font-size:15px}
   #inset.fade{animation:fadein .35s ease-out}
   .bump{animation:bump .7s ease-out}
   #counter-note:target{animation:spot 2.4s ease-out}
-  .btn,.tk-pay,.more,.key{transition:background-color .18s,border-color .18s,transform .12s,opacity .18s,filter .18s}
+  .btn,.tk-pay,.more,.key,.suggest{transition:background-color .18s,border-color .18s,transform .12s,opacity .18s,filter .18s}
   .btn:active,.tk-pay:active{transform:translateY(1px)}
 }
 @keyframes slidein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -149,6 +149,23 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .mapcol>.mapwrap>#map{position:absolute;inset:0;height:100%}
 .facts .clock{flex-direction:row;align-items:baseline;gap:.6rem}
 .facts .clock b{font-size:1.9rem}
+.facts{gap:.95rem}
+.facts .street{display:flex;gap:.7rem;align-items:flex-start}
+.facts .street svg{flex:none;width:4.2rem;margin:.1rem 0 0}
+.facts .when{display:flex;align-items:baseline;gap:1rem;border-bottom:1px solid var(--hair);padding-bottom:.45rem}
+.facts .when h2{border:0;margin:0;padding:0}
+.facts .when .clock b{font-size:1.45rem}
+.facts .tk-title{font-size:1.12rem}
+.suggest{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:1px dashed var(--hair);border-radius:6px;color:var(--ink-2);text-decoration:none;font-size:.78rem;line-height:1.3}
+.suggest svg{flex:none;width:1.15rem;height:1.15rem;color:var(--spd)}
+.suggest b{display:block;color:var(--ink);font-weight:700;font-size:.85rem}
+.suggest i{margin-left:auto;font-style:normal;color:var(--muted)}
+.suggest:hover{border-color:var(--ink-2);border-style:solid}
+.suggest:hover i{color:var(--ink)}
+.suggest:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
+.facts .suggest{margin-top:auto}
+.suggest[hidden]{display:none}
+.facts .suggest+.ticket{margin-top:0}
 .facts .ticket{margin-top:auto;grid-template-columns:minmax(0,1fr)}
 .facts .tk-main{padding:.85rem 1rem .7rem}
 .facts .tk-stub{border-left:0;border-top:2px dashed var(--hair);padding:.8rem 1rem}
@@ -284,6 +301,9 @@ i.dot::before{content:"·";margin-inline:.4em}
   .spark{grid-column:span 2}
   .explore{grid-template-columns:17rem minmax(0,1fr)}
   .facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.4rem;padding:1.2rem;border-left:0;border-top:1px solid var(--hair)}
+  .facts .suggest{grid-column:1/-1}
+  .facts .street{display:block}
+  .facts .street svg{width:7.5rem;margin-bottom:.35rem}
   .facts .ticket{grid-column:1/-1;margin-top:0;grid-template-columns:minmax(0,1fr) 15rem}
   .facts .tk-stub{border-top:0;border-left:2px dashed var(--hair)}
   .mapcol>.mapwrap{min-height:0}
@@ -338,7 +358,7 @@ html.poster .facts{display:grid;gap:1.6rem;padding:0;border:0;grid-column:2;grid
 html.poster .inset{grid-column:3;grid-row:3}
 html.poster .wards{grid-column:3;grid-row:4}
 html.poster .ward .row,html.poster .more,html.poster .wards .sub{display:none}
-html.poster .ticket,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
+html.poster .ticket,html.poster .suggest,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
 html.poster .page{position:relative}
 html.poster .posterfoot{display:block;position:absolute;left:90px;bottom:26px;width:1800px;font-size:.6rem}
 html.poster .hit b{font-size:2.3rem}
@@ -354,7 +374,7 @@ html.cardmode .hero{grid-column:1;grid-row:1;align-self:center;margin:0}
 html.cardmode .hero h1{font-size:4.2rem}
 html.cardmode .mapwrap{grid-column:2;grid-row:1;background:transparent}
 html.cardmode #map{height:534px}
-html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .hint,html.cardmode .scale{display:none}
+html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .hint,html.cardmode .scale{display:none}
 </style>
 
 <div class="page">
@@ -398,7 +418,7 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
     </div>
     <aside class="facts" aria-label="How the cameras work">
       <div class="block"><h2>On the street</h2><div class="street"><svg viewBox="0 0 120 34" aria-hidden="true"><path d="M2 20H118" stroke="var(--road)" stroke-width="2" fill="none"/><path d="M14 20H92" stroke="var(--spd)" stroke-opacity=".45" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M38 16.5l4.5 3.5-4.5 3.5" stroke="var(--spd)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="92" cy="20" r="3.6" fill="var(--spd)" fill-opacity=".85" stroke="var(--land)"/></svg><p>Band: the approach a camera watches, about 150&nbsp;m (speed) or 90&nbsp;m (red light, stop sign). Arrow: direction checked. Zoom in to see them.</p></div></div>
-      <div class="block"><h2>When</h2><div class="clock"><b>24/7</b><span>Always on, per DDOT.</span></div></div>
+      <div class="block when"><h2>When</h2><div class="clock"><b>24/7</b><span>Always on, per DDOT.</span></div></div>
       <div class="block"><h2>Fines</h2><table class="fines">
         <tr><td>Speed, 11–15 mph over</td><td>$100</td></tr>
         <tr><td>16–20 / 21–25 mph over</td><td>$150 / $200</td></tr>
@@ -407,6 +427,7 @@ html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stam
         <tr><td>Stop sign</td><td>$100</td></tr>
       </table></div>
       <div class="block"><h2>Not on the map</h2><div class="prose" id="unmapped"></div></div>
+      <a class="suggest" id="suggest" hidden href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H10l-4 3.5v-3.5H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>Suggestions? We're all lens.</b>Missing camera, wrong spot, better idea</span><i aria-hidden="true">→</i></a>
       <aside class="ticket" id="ticket" hidden aria-label="Tip jar">
         <div class="tk-main">
           <div class="tk-kicker">Saved you a ticket?</div>
