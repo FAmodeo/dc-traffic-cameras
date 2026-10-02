@@ -5,5 +5,7 @@
   "tip_label": "Chip in",
   "feedback_url": "https://github.com/famodeo/dc-traffic-cameras/issues/new?template=suggestion.yml",
   "note_form": "",
-  "note_entry": ""
+  "note_entry": "",
+  "note_name_entry": "",
+  "note_email_entry": ""
 }

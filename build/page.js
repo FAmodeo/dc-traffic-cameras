@@ -533,9 +533,12 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site
   form.onsubmit = async e => {
     e.preventDefault(); const v = txt.value.trim(); if (!v) return;
     send.disabled = true; send.textContent = 'Sending…';
-    try { if (!document.getElementById('sgWeb').value) await fetch(S2.note_form, {method:'POST', mode:'no-cors', body:new URLSearchParams({[S2.note_entry]:v})}); }
+    try { if (!document.getElementById('sgWeb').value) { const body = new URLSearchParams({[S2.note_entry]:v}), nm = document.getElementById('sgName'), ml = document.getElementById('sgMail');
+      if (S2.note_name_entry && nm.value.trim()) body.set(S2.note_name_entry, nm.value.trim());
+      if (S2.note_email_entry && ml.value.trim()) body.set(S2.note_email_entry, ml.value.trim());
+      await fetch(S2.note_form, {method:'POST', mode:'no-cors', body}); } }
     catch (err) { send.disabled = false; send.textContent = 'Retry'; return; }
-    txt.value = ''; send.disabled = false; send.textContent = 'Send'; form.hidden = true; box.classList.remove('open'); open.setAttribute('aria-expanded', false); done.hidden = false;
+    txt.value = ''; document.getElementById('sgName').value = document.getElementById('sgMail').value = ''; send.disabled = false; send.textContent = 'Send'; form.hidden = true; box.classList.remove('open'); open.setAttribute('aria-expanded', false); done.hidden = false;
   };
 })();
 

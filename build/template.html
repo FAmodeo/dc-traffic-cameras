@@ -169,6 +169,10 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .sg-form textarea{box-sizing:border-box;width:100%;resize:vertical;min-height:4.6rem;font:400 16px/1.35 var(--f-display);color:var(--ink);background:var(--bg);border:1px solid var(--hair);border-radius:4px;padding:.45rem .55rem}
 @media (pointer:fine){.sg-form textarea{font-size:.88rem}}
 .sg-form textarea:focus{outline:2px solid var(--spd);outline-offset:0;border-color:transparent}
+.sg-who{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:.4rem;margin-top:.4rem}
+.sg-who input{box-sizing:border-box;width:100%;min-width:0;font:400 16px/1.2 var(--f-display);color:var(--ink);background:var(--bg);border:1px solid var(--hair);border-radius:4px;padding:.4rem .5rem}
+.sg-who input:focus{outline:2px solid var(--spd);outline-offset:0;border-color:transparent}
+@media (pointer:fine){.sg-who input{font-size:.8rem}}
 .sg-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.45rem;font-size:.72rem;color:var(--muted)}
 .sg-row button{font:700 .82rem/1 var(--f-display);padding:.5rem .95rem .42rem;border-radius:4px;border:0;background:var(--ink);color:var(--bg);cursor:pointer}
 .sg-row button:disabled{opacity:.5;cursor:default}
@@ -447,8 +451,9 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
         <form class="sg-form" id="sgForm" hidden>
           <label for="sgText" class="vh">Your note</label>
           <textarea id="sgText" rows="3" maxlength="1500" required placeholder="E.g. new speed camera on Benning Rd NE, eastbound at 21st St"></textarea>
+          <div class="sg-who"><label class="vh" for="sgName">Name (optional)</label><input id="sgName" maxlength="80" autocomplete="name" placeholder="Name (optional)"><label class="vh" for="sgMail">Email (optional)</label><input id="sgMail" type="email" maxlength="120" autocomplete="email" placeholder="Email, for a reply (optional)"></div>
           <input class="vh" id="sgWeb" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <div class="sg-row"><span>Anonymous. No name or email.</span><button type="submit" id="sgSend">Send</button></div>
+          <div class="sg-row"><span>Anonymous unless you add your name.</span><button type="submit" id="sgSend">Send</button></div>
         </form>
         <p class="sg-done" id="sgDone" hidden role="status">Got it, thanks. Every note gets read.</p>
       </div>
