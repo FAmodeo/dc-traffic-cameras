@@ -91,6 +91,26 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .total span{color:var(--ink-2);line-height:1.2;font-size:.85rem}
 .split{display:flex;flex-wrap:wrap;gap:.2rem .8rem;font-size:.8rem;color:var(--ink-2);margin-top:-.4rem}
 
+/* tip: hero button + ticket-stub card */
+.btn.tip{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid var(--red);background:transparent}
+.btn.tip i{width:.5rem;height:.5rem;border-radius:50%;background:var(--red)}
+.btn.tip:hover{background:color-mix(in srgb,var(--red) 12%,transparent)}
+.ticket{margin-top:1.4rem;display:grid;grid-template-columns:minmax(0,1fr) 15rem;background:var(--land);border:1px solid var(--hair);border-left:5px solid var(--red);border-radius:6px;overflow:hidden}
+.tk-main{padding:1rem 1.3rem;min-width:0}
+.tk-kicker{font:600 .68rem var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+.tk-title{margin:.3rem 0 .7rem;font-size:clamp(1.15rem,2.2vw,1.45rem);font-weight:800;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
+.tk-fields{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:.3rem 2rem;margin:0}
+.tk-fields div{min-width:0}
+.tk-fields dt{font:600 .62rem var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tk-fields dd{margin:0;font:600 .9rem var(--f-mono);color:var(--ink)}
+.tk-stub{position:relative;display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:1rem 1.2rem;border-left:2px dashed var(--hair);background:color-mix(in srgb,var(--red) 6%,var(--land))}
+.tk-stub::before,.tk-stub::after{content:"";position:absolute;left:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:1px solid var(--hair)}
+.tk-stub::before{top:-9px}.tk-stub::after{bottom:-9px}
+.tk-pay{display:block;text-align:center;font:800 1rem/1 var(--f-display);padding:.75rem 1rem .65rem;border-radius:4px;background:var(--red);color:#fff;text-decoration:none}
+.tk-pay:hover{filter:brightness(1.07)}
+.tk-pay:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.tk-stub span{font-size:.72rem;color:var(--ink-2);text-align:center;line-height:1.35}
+
 /* short facts row */
 .facts{display:grid;grid-template-columns:1.2fr .7fr 1fr 1fr;gap:1.6rem;margin-top:1.6rem}
 .street svg{display:block;width:7.5rem;height:auto;margin-bottom:.35rem}
@@ -225,6 +245,10 @@ i.dot::before{content:"·";margin-inline:.4em}
   .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:820px){
+  .ticket{grid-template-columns:minmax(0,1fr)}
+  .tk-stub{border-left:0;border-top:2px dashed var(--hair)}
+  .tk-stub::before,.tk-stub::after{display:none}
+  .tk-fields{grid-template-columns:repeat(2,auto)}
   .explore{grid-template-columns:minmax(0,1fr)}
   .legend{border-right:0;border-bottom:1px solid var(--hair);padding:.8rem .9rem;gap:.6rem}
   .legend .block h2,.sizesb,.filt{display:none}
@@ -266,7 +290,7 @@ html.poster .facts{grid-column:2;grid-row:4;margin:0;grid-template-columns:repea
 html.poster .inset{grid-column:3;grid-row:3}
 html.poster .wards{grid-column:3;grid-row:4}
 html.poster .ward .row,html.poster .more,html.poster .wards .sub{display:none}
-html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
+html.poster .ticket,html.poster .cta,html.poster .pick,html.poster .zoom,html.poster .hint,html.poster .card,html.poster .filt,html.poster .foot{display:none}
 html.poster .page{position:relative}
 html.poster .posterfoot{display:block;position:absolute;left:90px;bottom:26px;width:1800px;font-size:.6rem}
 html.poster .hit b{font-size:2.3rem}
@@ -282,7 +306,7 @@ html.cardmode .hero{grid-column:1;grid-row:1;align-self:center;margin:0}
 html.cardmode .hero h1{font-size:4.2rem}
 html.cardmode .mapwrap{grid-column:2;grid-row:1;background:transparent}
 html.cardmode #map{height:534px}
-html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .hint,html.cardmode .scale{display:none}
+html.cardmode .ticket,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .hint,html.cardmode .scale{display:none}
 </style>
 
 <div class="page">
@@ -291,7 +315,7 @@ html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legen
       <div class="eyebrow">Washington, DC<i class="dot"></i>updated monthly</div>
       <h1>DC Traffic Cameras</h1>
       <p class="dek">Every speed, red-light and stop-sign camera. Where it watches. How often it fines.</p>
-      <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn ghost" id="tipBtn" href="#" target="_blank" rel="noopener" hidden>Buy me a coffee</a></div>
+      <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true"></i><span>Pay a friendly fine</span></a></div>
     </div>
     <div class="stamp" id="stamp"></div>
   </header>
@@ -326,6 +350,23 @@ html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legen
       <div class="card" id="card" aria-live="polite"></div>
     </div>
   </main>
+
+  <aside class="ticket" id="ticket" hidden aria-label="Tip jar">
+    <div class="tk-main">
+      <div class="tk-kicker">Notice of Appreciation<i class="dot"></i>No. <span id="tkNo"></span></div>
+      <p class="tk-title">The only fine on this site you might enjoy paying.</p>
+      <dl class="tk-fields">
+        <div><dt>Violation</dt><dd>Studying all <span id="tkCams"></span> cameras</dd></div>
+        <div><dt>Fine</dt><dd>Any amount</dd></div>
+        <div><dt>Due</dt><dd>Whenever</dd></div>
+        <div><dt>Points</dt><dd>0</dd></div>
+      </dl>
+    </div>
+    <div class="tk-stub">
+      <a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Pay this fine</a>
+      <span>Tip jar. Keeps the map free, ad-free and updated.</span>
+    </div>
+  </aside>
 
   <section class="facts">
     <div class="block"><h2>On the street</h2><div class="street"><svg viewBox="0 0 120 34" aria-hidden="true"><path d="M2 20H118" stroke="var(--road)" stroke-width="2" fill="none"/><path d="M14 20H92" stroke="var(--spd)" stroke-opacity=".45" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M38 16.5l4.5 3.5-4.5 3.5" stroke="var(--spd)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="92" cy="20" r="3.6" fill="var(--spd)" fill-opacity=".85" stroke="var(--land)"/></svg><p>Band: the approach a camera watches, about 150&nbsp;m (speed) or 90&nbsp;m (red light, stop sign). Arrow: direction checked. Zoom in to see them.</p></div></div>
