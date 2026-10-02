@@ -5,7 +5,7 @@ const fs = require('fs'), path = require('path');
 const svg = fs.readFileSync(path.join(__dirname, 'favicon.svg'), 'utf8'), docs = path.join(__dirname, '..', 'docs');
 (async () => {
   const b = await chromium.launch();
-  for (const [name, px, bleed] of [['icon-32.png', 32, false], ['icon-192.png', 192, false], ['apple-touch-icon.png', 180, true]]) {
+  for (const [name, px, bleed] of [['icon-32.png', 32, false], ['icon-192.png', 192, false], ['icon-512.png', 512, false], ['apple-touch-icon.png', 180, true]]) {
     const p = await b.newPage({viewport:{width:px, height:px}});
     const s = bleed ? svg.replace('rx="7"', 'rx="0"') : svg;   // iOS rounds the corners itself
     await p.setContent(`<style>html,body{margin:0;background:transparent}svg{display:block;width:${px}px;height:${px}px}</style>${s}`);
