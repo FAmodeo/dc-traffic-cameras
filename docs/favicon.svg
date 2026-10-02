@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- a camera lens in the site's colours: ink tile, white ring, speed-blue pupil, orange recording dot -->
+  <rect width="32" height="32" rx="7" fill="#111418"/>
+  <circle cx="15" cy="17.5" r="8.6" fill="none" stroke="#ffffff" stroke-width="2.6"/>
+  <circle cx="15" cy="17.5" r="4.4" fill="#2a78d6"/>
+  <circle cx="25.6" cy="6.6" r="2.7" fill="#eb6834"/>
+</svg>
