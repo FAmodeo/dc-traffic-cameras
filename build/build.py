@@ -257,10 +257,11 @@ page = page.replace('__OG_IMAGE__', (SITE['site_url'].rstrip('/') + '/' if SITE[
 GF = re.compile(r'<link rel="preconnect" href="https://fonts\.googleapis\.com">\n<link rel="preconnect" href="https://fonts\.gstatic\.com" crossorigin>\n<link rel="stylesheet" href="https://fonts\.googleapis\.com/[^"]+">')
 assert GF.search(page), 'font links not found'
 public = GF.sub('<link rel="stylesheet" href="fonts/fonts.css">', page)   # self-hosted fonts: no third-party requests
+head, rest = public[:public.index('<style>')], public[public.index('<style>'):]   # title, meta, icons and font link belong in <head>
 OUT.write_text('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
                '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
                '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>\n'
-               '</head>\n<body>\n' + public + '\n</body>\n</html>\n')
+               + head + '</head>\n<body>\n' + rest + '\n</body>\n</html>\n')
 # one tiny page per camera, so a shared link unfurls with that camera's numbers (crawlers ignore #hashes); humans bounce to the map
 import html as _h, shutil
 CDIR = OUT.parent / 'c'; shutil.rmtree(CDIR, ignore_errors=True)
@@ -281,7 +282,7 @@ for c in recs:
         f'<meta name="description" content="{_h.escape(desc)}">\n<meta property="og:title" content="{_h.escape(title)}">\n'
         f'<meta property="og:description" content="{_h.escape(desc)}">\n<meta property="og:type" content="website">\n'
         f'<meta property="og:url" content="{site}c/{slug}/">\n<meta property="og:image" content="{site}og-card.png">\n'
-        f'<meta name="twitter:card" content="summary_large_image">\n<meta http-equiv="refresh" content="0;url={go}">\n'
+        f'<meta name="twitter:card" content="summary_large_image">\n<link rel="icon" href="../../favicon.svg" type="image/svg+xml">\n<meta http-equiv="refresh" content="0;url={go}">\n'
         f'<script>location.replace("{go}")</script>\n</head><body><p><a href="{go}">{_h.escape(c["loc"])}: open on the map</a></p></body></html>\n')
 if '--artifact' in sys.argv: (HERE.parent / 'dc_traffic_cameras.html').write_text(page)   # private preview copy only
 print(f'{OUT.name}: {len(page)/1e6:.2f} MB, {len(recs)} cameras, max distance {meta["maxd"]} mi, window {meta["window"]}')
