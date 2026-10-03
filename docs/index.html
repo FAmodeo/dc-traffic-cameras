@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
-<title>DC Traffic Cameras</title>
+<title>DC Traffic Cameras — Avoid a ticket!</title>
 <meta name="description" content="Every speed, red-light and stop-sign camera in Washington, DC: where it stands, what it watches and how often it fines. Free, updated monthly.">
-<meta property="og:title" content="DC Traffic Cameras">
+<meta property="og:title" content="DC Traffic Cameras — Avoid a ticket!">
 <meta property="og:description" content="Where DC's speed, red-light and stop-sign cameras stand, which way they look, and how often they fine.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://famodeo.github.io/dc-traffic-cameras/">
@@ -85,7 +85,8 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 /* hero */
 .hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem 2rem;margin-bottom:1.3rem}
 .hero h1{font-size:clamp(2.5rem,6.4vw,4.4rem);line-height:.95;letter-spacing:-.025em;margin-top:.25rem}
-.dek{margin:.6rem 0 0;color:var(--ink-2);font-size:1.08rem;max-width:44ch}
+.dek{margin:.6rem 0 0;color:var(--ink-2);font-size:1.08rem}
+.hero h1 .tagline{font-size:.42em;letter-spacing:-.01em;color:var(--red-ink);white-space:nowrap;vertical-align:.32em}
 .cta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.1rem}
 .btn{font:600 .88rem/1 var(--f-display);padding:.6rem .95rem .5rem;border-radius:4px;border:1px solid var(--hair);background:var(--land);color:var(--ink);text-decoration:none;cursor:pointer}
 .btn:hover{border-color:var(--ink-2)}
@@ -447,6 +448,7 @@ html.cardmode .page{width:1200px;height:630px;max-width:none;box-sizing:border-b
 html.cardmode main,html.cardmode .explore,html.cardmode .mapcol{display:contents}
 html.cardmode .hero{grid-column:1;grid-row:1;align-self:center;margin:0}
 html.cardmode .hero h1{font-size:4.2rem}
+html.cardmode .tagline{display:none}
 html.cardmode .mapwrap{grid-column:2;grid-row:1;background:transparent}
 html.cardmode #map{height:534px}
 html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .cta,html.cardmode .stamp,html.cardmode .legend,html.cardmode .card,html.cardmode .facts,html.cardmode .lower,html.cardmode .foot,html.cardmode .zoom,html.cardmode .home,html.cardmode .mapnav,html.cardmode .hint,html.cardmode .scale{display:none}
@@ -456,7 +458,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
   <header class="hero">
     <div>
       <div class="eyebrow">Washington, DC<i class="dot"></i>updated monthly</div>
-      <h1>DC Traffic Cameras</h1>
+      <h1>DC Traffic Cameras <span class="tagline">— Avoid a ticket!</span></h1>
       <p class="dek">Every speed, red-light and stop-sign camera. Where it watches. How often it fines.</p>
       <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true"></i><span>Chip in</span></a></div>
     </div>
