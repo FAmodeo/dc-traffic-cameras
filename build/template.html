@@ -183,18 +183,15 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .btn.tip{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid var(--red);background:transparent}
 .btn.tip i{width:.5rem;height:.5rem;border-radius:50%;background:var(--red)}
 .btn.tip:hover{background:color-mix(in srgb,var(--red) 12%,transparent)}
-.ticket{margin-top:1.4rem;display:grid;grid-template-columns:minmax(0,1fr) 15rem;background:var(--land);border:1px solid var(--hair);border-left:5px solid var(--red);border-radius:6px;overflow:hidden}
-.tk-main{padding:1rem 1.3rem;min-width:0}
+.ticket{margin-top:1.4rem;background:var(--land);border:1px solid var(--hair);border-left:3px solid var(--red);border-radius:6px}
+.tk-main{padding:.7rem .95rem .75rem;min-width:0}
 .tk-kicker{font:600 .68rem var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red-ink)}
-.tk-sub{margin:0;color:var(--ink-2);font-size:.95rem}
-.tk-title{margin:.3rem 0 .25rem;font-size:clamp(1.15rem,2.2vw,1.45rem);font-weight:800;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
-.tk-stub{position:relative;display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:1rem 1.2rem;border-left:2px dashed var(--hair);background:color-mix(in srgb,var(--red) 6%,var(--land))}
-.tk-stub::before,.tk-stub::after{content:"";position:absolute;left:-9px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:1px solid var(--hair)}
-.tk-stub::before{top:-9px}.tk-stub::after{bottom:-9px}
-.tk-pay{display:block;text-align:center;font:800 1rem/1 var(--f-display);padding:.75rem 1rem .65rem;border-radius:4px;background:var(--red-btn);color:#fff;text-decoration:none}
-.tk-pay:hover{filter:brightness(1.07)}
+.tk-sub{margin:0;color:var(--ink-2);font-size:.85rem}
+.tk-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+.tk-title{margin:.2rem 0 .3rem;font-size:1.05rem;font-weight:800;line-height:1.2;letter-spacing:-.01em}
+.tk-pay{flex:none;font:700 .82rem/1 var(--f-display);padding:.45rem .85rem .38rem;border-radius:999px;border:1.5px solid var(--red-ink);color:var(--red-ink);text-decoration:none}
+.tk-pay:hover{background:var(--red-btn);border-color:var(--red-btn);color:#fff}
 .tk-pay:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.tk-stub span{font-size:.72rem;color:var(--ink-2);text-align:center;line-height:1.35}
 
 /* short facts row */
 .facts{display:flex;flex-direction:column;gap:1.15rem;padding:1.1rem 1.1rem 1rem;border-left:1px solid var(--hair);min-width:0}
@@ -208,7 +205,6 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .facts .when{display:flex;align-items:baseline;gap:1rem;border-bottom:1px solid var(--hair);padding-bottom:.45rem}
 .facts .when h2{border:0;margin:0;padding:0}
 .facts .when .clock b{font-size:1.45rem}
-.facts .tk-title{font-size:1.12rem}
 .suggest{border:1px dashed var(--hair);border-radius:6px;font-size:.78rem;line-height:1.3;color:var(--ink-2)}
 .suggest:hover,.suggest.open{border-color:var(--ink-2)}
 .sg-open{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;cursor:pointer;border-radius:6px}
@@ -236,10 +232,7 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .wtip.on{opacity:1}
 .facts .suggest{margin-top:auto}
 .facts .suggest+.ticket{margin-top:0}
-.facts .ticket{margin-top:auto;grid-template-columns:minmax(0,1fr)}
-.facts .tk-main{padding:.85rem 1rem .7rem}
-.facts .tk-stub{border-left:0;border-top:2px dashed var(--hair);padding:.8rem 1rem}
-.facts .tk-stub::before,.facts .tk-stub::after{display:none}
+.facts .ticket{margin-top:auto}
 .street svg{display:block;width:7.5rem;height:auto;margin-bottom:.35rem}
 .street p,.prose{margin:0;font-size:.82rem;color:var(--ink-2)}
 .prose p{margin:0}
@@ -371,20 +364,13 @@ i.dot::before{content:"·";margin-inline:.4em}
   .spark{grid-column:span 2}
   .explore{grid-template-columns:17rem minmax(0,1fr)}
   .facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.4rem;padding:1.2rem;border-left:0;border-top:1px solid var(--hair)}
-  .facts .suggest{grid-column:1/-1}
+  .facts .suggest,.facts .ticket{grid-column:1/-1}
   .facts .street{display:block}
   .facts .street svg{width:7.5rem;margin-bottom:.35rem}
-  .facts .ticket{grid-column:1/-1;margin-top:0;grid-template-columns:minmax(0,1fr) 15rem}
-  .facts .tk-stub{border-top:0;border-left:2px dashed var(--hair)}
   .mapcol>.mapwrap{min-height:0}
   .mapcol>.mapwrap>#map{position:static}
 }
 @media (max-width:820px){
-  .facts .ticket{grid-template-columns:minmax(0,1fr)}
-  .facts .tk-stub{border-left:0;border-top:2px dashed var(--hair)}
-  .ticket{grid-template-columns:minmax(0,1fr)}
-  .tk-stub{border-left:0;border-top:2px dashed var(--hair)}
-  .tk-stub::before,.tk-stub::after{display:none}
     .explore{grid-template-columns:minmax(0,1fr)}
   .legend{border-right:0;border-bottom:1px solid var(--hair);padding:.8rem .9rem;gap:.6rem}
   .legend .block h2,.sizesb,.filt{display:none}
@@ -518,11 +504,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
         <div class="tk-main">
           <div class="tk-kicker">Saved you a ticket?</div>
           <p class="tk-title">The cheapest in DC is $100.</p>
-          <p class="tk-sub">99¢ keeps this map free.</p>
-        </div>
-        <div class="tk-stub">
-          <a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Chip in</a>
-          <span>Free<i class="dot"></i>no ads<i class="dot"></i>no tracking</span>
+          <div class="tk-row"><p class="tk-sub">99¢ keeps this map free.</p><a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Chip in</a></div>
         </div>
       </aside>
     </aside>
