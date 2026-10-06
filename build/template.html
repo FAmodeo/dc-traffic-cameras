@@ -181,7 +181,7 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 
 /* tip: hero button + ticket-stub card */
 .btn.tip{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid var(--red);background:transparent}
-.btn.tip i{width:.5rem;height:.5rem;border-radius:50%;background:var(--red)}
+.btn.tip i{font-style:normal;line-height:1}
 .btn.tip:hover{background:color-mix(in srgb,var(--red) 12%,transparent)}
 .ticket{margin-top:1.4rem;background:var(--land);border:1px solid var(--hair);border-left:3px solid var(--red);border-radius:6px}
 .tk-main{padding:.7rem .95rem .75rem;min-width:0}
@@ -440,7 +440,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
       <div class="eyebrow">Washington, DC<i class="dot"></i>updated monthly</div>
       <h1>DC Traffic Cameras <span class="tagline">— Avoid a ticket!</span></h1>
       <p class="dek">Every speed, red-light and stop-sign camera. Where it watches. How often it fines.</p>
-      <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true"></i><span>Chip in</span></a></div>
+      <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true">☕</i><span>Buy me a coffee</span></a></div>
     </div>
     <div class="stamp" id="stamp"></div>
   </header>
@@ -504,7 +504,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
         <div class="tk-main">
           <div class="tk-kicker">Saved you a ticket?</div>
           <p class="tk-title">The cheapest in DC is $100.</p>
-          <div class="tk-row"><p class="tk-sub">99¢ keeps this map free.</p><a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener">Chip in</a></div>
+          <div class="tk-row"><p class="tk-sub">Keeps the map free.</p><a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener"><span aria-hidden="true">☕</span> Buy me a coffee</a></div>
         </div>
       </aside>
     </aside>
