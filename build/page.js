@@ -537,7 +537,7 @@ function select(id, fromOutside) {
   pop.querySelector('.pop-x').onclick = closePop;
   pop.querySelector('.pop-share').onclick = e => share(e.currentTarget, {title:`${c.loc} · DC Traffic Cameras`,
     text:c.n ? `This camera on ${c.loc} issued ${fmt(c.n)} fines in 12 months, one every ${ev}. #${rk} of ${cams.length} in DC.` : `${TYPES[c.t].name} camera on ${c.loc}, not fining yet.`,
-    url:`${SITE_URL}c/${slugOf(c.id)}/`});
+    url:`${SITE_URL}c/${slugOf(c.id)}/#map`});
   const got = pop.querySelector('.pop-got'), less = pop.querySelector('.pop-less'), sl = slugOf(c.id);
   const paint = () => { const k = TAB[sl] || 0; got.textContent = k ? `Got me${k > 1 ? ' ×' + k : ''} ✓` : 'This one got me'; got.classList.toggle('on', !!k); less.hidden = !k; };
   got.onclick = () => { setTab(sl, (TAB[sl] || 0) + 1); paint(); got.classList.remove('bumped'); void got.offsetWidth; got.classList.add('bumped'); };
@@ -601,7 +601,7 @@ if (meta.site.tip_url) {
   const tk = document.getElementById('ticket'); document.getElementById('tkPay').href = meta.site.tip_url; tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
-if (meta.site.repo_url) document.getElementById('links').innerHTML = A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
+if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${cams.length} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
 // suggestion box: with a Google Form configured, notes post in place (no account, no redirect); else the GitHub form
 (function suggest() {
   const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');

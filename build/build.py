@@ -253,6 +253,7 @@ tpl = open(HERE / 'template.html').read().replace('/*__SCRIPT__*/', open(HERE / 
 page = tpl.replace('/*__DATA__*/null', json.dumps(payload, separators=(',', ':'))) \
           .replace('/*__BASEMAP__*/null', json.dumps(basemap, separators=(',', ':')))
 page = page.replace('__SITE_URL__', SITE['site_url'])
+page = page.replace('<!--__GSV__-->', f'<meta name="google-site-verification" content="{SITE["google_verification"]}">' if SITE.get('google_verification') else '')
 page = page.replace('__OG_IMAGE__', (SITE['site_url'].rstrip('/') + '/' if SITE['site_url'] else '') + 'og-card.png')
 # public site: a complete HTML document; artifact copy: the bare fragment (the artifact host adds its own skeleton)
 GF = re.compile(r'<link rel="preconnect" href="https://fonts\.googleapis\.com">\n<link rel="preconnect" href="https://fonts\.gstatic\.com" crossorigin>\n<link rel="stylesheet" href="https://fonts\.googleapis\.com/[^"]+">')
@@ -263,28 +264,85 @@ OUT.write_text('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8"
                '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
                '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>\n'
                + head + '</head>\n<body>\n' + rest + '\n</body>\n</html>\n')
-# one tiny page per camera, so a shared link unfurls with that camera's numbers (crawlers ignore #hashes); humans bounce to the map
-import html as _h, shutil
-CDIR = OUT.parent / 'c'; shutil.rmtree(CDIR, ignore_errors=True)
+# one small page per camera: real content for search engines and link previews. A shared link carries #map and sends
+# people straight to the camera on the map; without it (search visitors) the page shows the camera's own numbers.
+import html as _h, shutil, math as _m
+CDIR = OUT.parent / 'c'; shutil.rmtree(CDIR, ignore_errors=True); CDIR.mkdir()
 site = SITE['site_url'].rstrip('/') + '/' if SITE['site_url'] else ''
 ranked = sorted((c for c in recs if c['n']), key=lambda c: -c['n']); rank = {c['id']: i + 1 for i, c in enumerate(ranked)}
 def pace(n):
     m = 365.25 * 1440 / n
     return f'{max(1, round(m))} min' if m < 60 else f'{round(m / 60)} h' if m < 2880 else f'{round(m / 1440)} days'
 KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stp': 'Stop-sign camera'}
+FINE = {'spd': '$100 for 11–15 mph over, rising to $150, $200 and $400–500 above that', 'red': '$150', 'stp': '$100'}
+STATUS = {'live': 'Fining', 'warn': 'Warning period (warnings only)', 'soon': 'Not live yet'}
+MON = lambda ym: dt.date(int(ym[:4]), int(ym[5:]), 1).strftime('%b %Y')
+slugof = lambda c: c['id'].replace(' ', '').lower()
+E = _h.escape
+GC = SITE.get('goatcounter', '')
+CSS = (':root{--bg:#f3f4f5;--land:#fff;--ink:#111418;--ink-2:#4a5159;--muted:#666e77;--hair:#dde0e3;--spd:#226ac2;--red:#c2491a;color-scheme:light dark}'
+       '@media (prefers-color-scheme:dark){:root{--bg:#0f1113;--land:#1a1c1f;--ink:#f2f4f5;--ink-2:#b9c0c7;--muted:#88909a;--hair:#2a2e32;--spd:#3987e5;--red:#f07a48}}'
+       'body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Overpass","Helvetica Neue",Arial,sans-serif}'
+       'main{max-width:44rem;margin:0 auto;padding:1.4rem 16px 2.5rem}a{color:var(--spd)}'
+       '.crumb{font-size:.8rem;color:var(--muted)}.crumb a{color:inherit}h1{font-size:1.7rem;line-height:1.15;margin:.4rem 0 .3rem}'
+       '.sub{color:var(--ink-2);margin:0 0 1rem}.go{display:inline-block;margin:.2rem 0 1.2rem;padding:.6rem 1rem .5rem;border-radius:4px;background:var(--ink);color:var(--bg);font-weight:700;text-decoration:none}'
+       '.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;margin:0 0 1.2rem;padding:1rem;background:var(--land);border:1px solid var(--hair);border-radius:8px}'
+       '.stats b{display:block;font-size:1.5rem;line-height:1.1}.stats span{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}'
+       'table{width:100%;border-collapse:collapse;font-size:.9rem;margin:.3rem 0 1.2rem}td,th{padding:.25rem 0;border-bottom:1px solid var(--hair);text-align:left}td:last-child,th:last-child{text-align:right;font-variant-numeric:tabular-nums}'
+       'h2{font-size:1.05rem;margin:1.2rem 0 .3rem}ul{padding-left:1.1rem}li{margin:.2rem 0}.foot{margin-top:2rem;font-size:.75rem;color:var(--muted)}')
+def count_js(path):
+    if not GC: return ''
+    return ('<script>(function(){try{if(localStorage.getItem("dctc-nocount"))return}catch(e){}'
+            f'if(location.host!=={json.dumps(site.split("/")[2] if site else "")})return;'
+            f'var q=new URLSearchParams({{p:{json.dumps(path)},t:document.title,r:document.referrer,rnd:Math.random().toString(36).slice(2)}});'
+            f'new Image().src="https://{GC}.goatcounter.com/count?"+q}})()</script>')
+def cpage(path, title, desc, body, extra_head='', redirect=''):
+    return ('<!doctype html>\n<html lang="en"><head><meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            f'<title>{E(title)}</title>\n<meta name="description" content="{E(desc)}">\n<link rel="canonical" href="{site}{path}">\n'
+            f'<meta property="og:title" content="{E(title)}">\n<meta property="og:description" content="{E(desc)}">\n<meta property="og:type" content="website">\n'
+            f'<meta property="og:url" content="{site}{path}">\n<meta property="og:image" content="{site}og-card.png">\n<meta name="twitter:card" content="summary_large_image">\n'
+            f'<link rel="icon" href="{"../" * path.count("/")}favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="{"../" * path.count("/")}fonts/fonts.css">\n'
+            f'{redirect}{extra_head}<style>{CSS}</style>\n</head><body><main>\n{body}\n'
+            '<p class="foot">Independent and non-commercial; not affiliated with DDOT or the DC Government. Data: DDOT Automated Safety Cameras via '
+            '<a href="https://opendata.dc.gov/datasets/automated-safety-cameras">Open Data DC</a> (CC BY 4.0), adapted. Ticket counts cover months each camera was live. '
+            'For information only; posted signs and the law govern.</p>\n</main></body></html>\n')
+near = lambda c, k=5: sorted((o for o in recs if o is not c), key=lambda o: (o['x'] - c['x']) ** 2 + (o['y'] - c['y']) ** 2)[:k]
+months = meta['months']
 for c in recs:
-    slug = c['id'].replace(' ', '').lower(); go = f'../../#cam-{slug}'
-    title = f"{c['loc']}: {c['n']:,} fines in a year" if c['n'] else f"{KIND.get(c['t'], 'Camera')}, {c['loc']}"
-    desc = (f"{KIND.get(c['t'], 'Camera')}, one fine every {pace(c['n'])} on average. #{rank[c['id']]} of {len(recs)} DC cameras. "
-            if c['n'] else 'Not fining yet. ') + 'Every speed, red-light and stop-sign camera in DC, on one map.'
-    d = CDIR / slug; d.mkdir(parents=True)
-    (d / 'index.html').write_text(
-        f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8">\n<title>{_h.escape(title)} · DC Traffic Cameras</title>\n'
-        f'<meta name="description" content="{_h.escape(desc)}">\n<meta property="og:title" content="{_h.escape(title)}">\n'
-        f'<meta property="og:description" content="{_h.escape(desc)}">\n<meta property="og:type" content="website">\n'
-        f'<meta property="og:url" content="{site}c/{slug}/">\n<meta property="og:image" content="{site}og-card.png">\n'
-        f'<meta name="twitter:card" content="summary_large_image">\n<link rel="icon" href="../../favicon.svg" type="image/svg+xml">\n<meta http-equiv="refresh" content="0;url={go}">\n'
-        f'<script>location.replace("{go}")</script>\n</head><body><p><a href="{go}">{_h.escape(c["loc"])}: open on the map</a></p></body></html>\n')
+    slug = slugof(c); path = f'c/{slug}/'; go = f'../../#cam-{slug}'; kind = KIND.get(c['t'], 'Camera')
+    title = f"{kind}: {c['loc']} · DC Traffic Cameras"
+    desc = (f"{kind} at {c['loc']}, Washington DC: {c['n']:,} tickets in 12 months, one every {pace(c['n'])} on average, #{rank[c['id']]} of {len(recs)} DC cameras."
+            if c['n'] else f"{kind} at {c['loc']}, Washington DC. {STATUS.get(c['s'], '')}.")
+    facts = [f"{kind}", STATUS.get(c['s'], c['s'])] + ([f"Posted limit {c['lim']} mph"] if c.get('lim') and c['t'] == 'spd' else []) \
+            + [f"Near {c['hood']}, Ward {c['ward']}"] + ([f"Since {dt.date.fromisoformat(c['since']).strftime('%b %Y')}"] if c.get('since') else []) \
+            + (['Portable unit'] if c.get('port') else [])
+    statbox = (f'<div class="stats"><div><b>{c["n"]:,}</b><span>tickets, 12 months</span></div><div><b>1 / {pace(c["n"])}</b><span>on average</span></div>'
+             f'<div><b>#{rank[c["id"]]}</b><span>of {len(recs)} cameras</span></div></div>') if c['n'] else ''
+    m = c.get('m') or []
+    table = ('<h2>Tickets per month</h2><table><tr><th>Month</th><th>Tickets</th></tr>' +
+             ''.join(f'<tr><td>{MON(ym)}</td><td>{v:,}</td></tr>' for ym, v in zip(months, m)) + '</table>') if c['n'] and m else ''
+    nearby = ''.join(f'<li><a href="../{slugof(o)}/">{E(o["loc"])}</a> ({KIND.get(o["t"], "camera").lower()}{", " + format(o["n"], ",") + " tickets" if o["n"] else ""})</li>' for o in near(c))
+    body = (f'<p class="crumb"><a href="../../">DC Traffic Cameras</a> › <a href="../">All cameras</a> › Ward {E(str(c["ward"]))}</p>\n'
+            f'<h1>{E(c["loc"])}</h1>\n<p class="sub">{" · ".join(E(f) for f in facts)}</p>\n<a class="go" href="{go}">See it on the map →</a>\n{statbox}\n'
+            f'<p>Fine if caught: {FINE.get(c["t"], "see DDOT")}. Cameras run 24/7. Ticket counts come from DDOT and cover {E(meta["window"])}.</p>\n{table}'
+            f'<h2>Nearby cameras</h2><ul>{nearby}</ul>')
+    redirect = f'<script>if(location.hash==="#map")location.replace("{go}")</script>\n'
+    d = CDIR / slug; d.mkdir()
+    (d / 'index.html').write_text(cpage(path, title, desc, body + count_js(f'/c/{slug}/'), redirect=redirect))
+# list of every camera by ward, linked from the map page and the sitemap
+wards = {}
+for c in recs: wards.setdefault(str(c['ward']), []).append(c)
+lst = ''.join(f'<h2>Ward {w} · {len(cs)} cameras</h2><ul>' + ''.join(
+    f'<li><a href="{slugof(c)}/">{E(c["loc"])}</a> ({KIND.get(c["t"], "camera").lower()}{", " + format(c["n"], ",") + " tickets" if c["n"] else ", not fining yet"})</li>'
+    for c in sorted(cs, key=lambda c: -(c['n'] or 0))) + '</ul>' for w, cs in sorted(wards.items()))
+(CDIR / 'index.html').write_text(cpage('c/', 'All traffic cameras in Washington DC, by ward · DC Traffic Cameras',
+    f'Every one of DC\'s {len(recs)} fixed speed, red-light and stop-sign cameras, listed by ward with tickets issued over {meta["window"]}.',
+    f'<p class="crumb"><a href="../">DC Traffic Cameras</a> › All cameras</p>\n<h1>All {len(recs)} traffic cameras in DC</h1>\n'
+    f'<p class="sub">By ward, busiest first. Tickets over {E(meta["window"])}.</p>\n<a class="go" href="../">Open the map →</a>\n{lst}' + count_js('/c/')))
+# sitemap for search engines
+urls = [site, site + 'c/'] + [f'{site}c/{slugof(c)}/' for c in recs]
+(OUT.parent / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    ''.join(f'<url><loc>{u}</loc><lastmod>{meta["asof_iso"]}</lastmod></url>\n' for u in urls) + '</urlset>\n')
 if '--artifact' in sys.argv: (HERE.parent / 'dc_traffic_cameras.html').write_text(page)   # private preview copy only
 print(f'{OUT.name}: {len(page)/1e6:.2f} MB, {len(recs)} cameras, max distance {meta["maxd"]} mi, window {meta["window"]}')
 print('unmapped', unmapped, '| last record', meta['last_record'], '| fines 12m', f"{stats['fines']:,}", '| every', stats['sec'], 's | floor $', f"{stats['usd']:,}")
