@@ -598,7 +598,8 @@ document.getElementById('sources').innerHTML = `<p>${src}</p><p class="note" id=
 document.getElementById('posterfoot').innerHTML = src;
 if (meta.site.tip_url) {
   const tb = document.getElementById('tipBtn'); tb.href = meta.site.tip_url; tb.querySelector('span').textContent = meta.site.tip_label; tb.hidden = false;
-  const tk = document.getElementById('ticket'); document.getElementById('tkPay').href = meta.site.tip_url; tk.hidden = false;
+  const tk = document.getElementById('ticket'), amts = meta.site.tip_amounts || [{label:meta.site.tip_label, url:meta.site.tip_url}];   // one click per amount, straight to checkout
+  document.getElementById('tkAmts').innerHTML = amts.map(a => `<a class="tk-pay" href="${a.url}" target="_blank" rel="noopener">${a.label}</a>`).join(''); tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
 if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${cams.length} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');

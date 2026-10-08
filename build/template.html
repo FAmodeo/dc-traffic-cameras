@@ -191,6 +191,8 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .tk-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
 .tk-title{margin:.2rem 0 .3rem;font-size:1.05rem;font-weight:800;line-height:1.2;letter-spacing:-.01em}
 .tk-pay{flex:none;font:700 .82rem/1 var(--f-display);padding:.45rem .85rem .38rem;border-radius:999px;border:1.5px solid var(--red-ink);color:var(--red-ink);text-decoration:none}
+.tk-amts{display:flex;gap:.4rem;flex-wrap:wrap}
+.tk-amts .tk-pay{padding:.42rem .6rem .36rem}
 .tk-pay:hover{background:var(--red-btn);border-color:var(--red-btn);color:#fff}
 .tk-pay:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
@@ -505,9 +507,9 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
       </div>
       <aside class="ticket" id="ticket" hidden aria-label="Tip jar">
         <div class="tk-main">
-          <div class="tk-kicker">Saved you a ticket?</div>
+          <div class="tk-kicker">Saved you a ticket? Buy me a coffee <span aria-hidden="true">☕</span></div>
           <p class="tk-title">The cheapest in DC is $100.</p>
-          <div class="tk-row"><p class="tk-sub">Keeps the map free.</p><a class="tk-pay" id="tkPay" href="#" target="_blank" rel="noopener"><span aria-hidden="true">☕</span> Buy me a coffee</a></div>
+          <div class="tk-row"><span class="tk-amts" id="tkAmts"><a class="tk-pay" href="#" target="_blank" rel="noopener">Chip in</a></span></div>
         </div>
       </aside>
     </aside>

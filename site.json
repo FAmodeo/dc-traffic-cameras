@@ -9,5 +9,19 @@
   "note_name_entry": "entry.153223972",
   "note_email_entry": "entry.153223972",
   "goatcounter": "frhank",
-  "google_verification": "ROK9EJQ5c05mNF1Xn85deYRWmzlN2W_cAUmB1puOGJU"
+  "google_verification": "ROK9EJQ5c05mNF1Xn85deYRWmzlN2W_cAUmB1puOGJU",
+  "tip_amounts": [
+    {
+      "label": "$2.99",
+      "url": "https://donate.stripe.com/fZucN7ajU3qm4yo51V4ow02"
+    },
+    {
+      "label": "$5.99",
+      "url": "https://donate.stripe.com/6oU4gB3Vw1ie7KAeCv4ow03"
+    },
+    {
+      "label": "$9.99",
+      "url": "https://donate.stripe.com/cNi8wR77I0ea8OE7a34ow04"
+    }
+  ]
 }
