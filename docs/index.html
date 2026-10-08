@@ -204,6 +204,8 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .tk-pay{flex:none;font:700 .82rem/1 var(--f-display);padding:.45rem .85rem .38rem;border-radius:999px;border:1.5px solid var(--red-ink);color:var(--red-ink);text-decoration:none}
 .tk-amts{display:flex;gap:.4rem;flex-wrap:wrap}
 .tk-amts .tk-pay{padding:.42rem .6rem .36rem}
+.ticket{container:tk/inline-size}
+@container tk (max-width:250px){.tk-main{padding-left:.75rem;padding-right:.75rem}.tk-amts{gap:.25rem}.tk-amts .tk-pay{padding:.42rem .42rem .36rem;font-size:.75rem}}
 .tk-pay:hover{background:var(--red-btn);border-color:var(--red-btn);color:#fff}
 .tk-pay:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
