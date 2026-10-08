@@ -15,7 +15,7 @@ ALIAS = {'MA': 'MASSACHUSETTS', 'N CAPITOL': 'NORTH CAPITOL', 'S CAPITOL': 'SOUT
 WORD = {'ROAD': 'RD', 'DRIVE': 'DR', 'STREET': 'ST', 'TERR': 'TER', 'AVENUE': 'AVE', 'PLACE': 'PL', 'RAMP': None}
 TYPES = {'ST', 'AVE', 'RD', 'PL', 'DR', 'BLVD', 'PKWY', 'TER', 'CT', 'CIR', 'LN', 'FWY', 'WAY', 'SQ', 'BRG', 'XING'}
 # Approach length upstream of the camera and run-out past it, in metres (approximate enforcement zone)
-REACH = {'spd': (150, 30), 'red': (90, 10), 'stp': (90, 10)}
+REACH = {'spd': (150, 30), 'red': (90, 10), 'stp': (90, 10), 'trk': (90, 10)}
 OFFSET = 0.0   # bands sit on the centreline; direction is carried by the arrow
 
 

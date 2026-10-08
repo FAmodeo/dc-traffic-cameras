@@ -5,12 +5,14 @@ const NS = 'http://www.w3.org/2000/svg';
 const TYPES = {
   spd:{name:'Speed', desc:'Posted speed limit'},
   red:{name:'Red light', desc:'Entering on red'},
-  stp:{name:'Stop sign', desc:'Rolling through a stop'}};
+  stp:{name:'Stop sign', desc:'Rolling through a stop'},
+  trk:{name:'Truck restriction', desc:'Trucks on a no-truck street'}};   // only cameras listed in data/corrections.csv
+const KEYTYPES = ['spd', 'red', 'stp'];   // legend rows; the rare truck camera has none
 const STATS = {
   live:{name:'Fining', desc:'Tickets mailed to the owner'},
   warn:{name:'Warning period', desc:'New: warnings only, ~30 days'},
   soon:{name:'Not live yet', desc:'Being set up or tested'}};
-const on = {spd:true, red:true, stp:true, live:true, warn:true, soon:true};
+const on = {spd:true, red:true, stp:true, trk:true, live:true, warn:true, soon:true};
 const cams = DATA.cams, meta = DATA.meta;
 const maxN = Math.max(...cams.map(c => c.n || 0));
 const rad = n => 0.646875 * (3 + 9 * Math.sqrt((n || 0) / maxN));   // big-map dot radius in px (0.5625 × 1.15)
@@ -24,6 +26,7 @@ if (cardmode) document.documentElement.classList.add('cardmode');
 function shape(t, r) {
   if (t === 'spd') return ['circle', {r}];
   if (t === 'red') { const a = r * 1.3; return ['path', {d:`M0 ${-a}L${a} 0L0 ${a}L${-a} 0Z`}]; }
+  if (t === 'trk') { const a = r * .95; return ['rect', {x:-a, y:-a, width:2 * a, height:2 * a, rx:a * .2}]; }
   const a = r * 1.1, p = []; for (let i = 0; i < 8; i++) { const th = Math.PI / 8 + i * Math.PI / 4; p.push((a * Math.cos(th)).toFixed(2) + ' ' + (a * Math.sin(th)).toFixed(2)); }
   return ['path', {d:'M' + p.join('L') + 'Z'}];
 }
@@ -156,17 +159,17 @@ function keyRow(host, k, info, glyphEl, n) {
   b.onclick = () => { if (poster) return; on[k] = !on[k]; b.setAttribute('aria-pressed', on[k]); applyFilter(); };
   host.appendChild(b);
 }
-for (const t in TYPES) keyRow(document.getElementById('keysType'), t, TYPES[t], mini(t, 'live', 6), count(c => c.t === t));
+for (const t of KEYTYPES) keyRow(document.getElementById('keysType'), t, TYPES[t], mini(t, 'live', 6), count(c => c.t === t));
 for (const s in STATS) keyRow(document.getElementById('keysStat'), s, STATS[s], mini('spd', s, 6), count(c => c.s === s));
 document.getElementById('sizes').innerHTML = [1000, 10000, 40000, 90000].map(v => {
   const r = rad(v) * 1.15; return `<figure><svg viewBox="${-r - 2} ${-r - 2} ${2 * r + 4} ${2 * r + 4}" width="${(2 * r + 4) / 15}rem" aria-hidden="true"><circle r="${r}" fill="var(--muted)"/></svg><span class="num">${v / 1000}k</span></figure>`;
 }).join('');
 const um = meta.unmapped;
-document.getElementById('unmapped').innerHTML = `<p><strong>${(um['Clear Lane'] || 0) + (um['School Bus'] || 0)} cameras ride on buses</strong> (bus lanes, school-bus stop arms): no fixed spot to map. Truck-route cameras left out.</p>`;
+document.getElementById('unmapped').innerHTML = `<p><strong>${(um['Clear Lane'] || 0) + (um['School Bus'] || 0)} cameras ride on buses</strong> (bus lanes, school-bus stop arms): no fixed spot to map. Truck-route cameras left out, bar one visitors reported.</p>`;
 function stats() {
   const v = cams.filter(vis);
   document.getElementById('tot').textContent = v.length;
-  for (const t in TYPES) document.querySelector(`#key-${t} .kn`).textContent = count(c => c.t === t && on[c.s]);
+  for (const t of KEYTYPES) document.querySelector(`#key-${t} .kn`).textContent = count(c => c.t === t && on[c.s]);
   for (const k in STATS) document.querySelector(`#key-${k} .kn`).textContent = count(c => c.s === k && on[c.t]);
   document.getElementById('split').innerHTML = Object.keys(STATS).filter(s => on[s]).map(s => `<span><b class="num">${v.filter(c => c.s === s).length}</b> ${STATS[s].name.toLowerCase()}</span>`).join('');
 }
@@ -403,6 +406,10 @@ function setInsetScale() { const sc = (poster ? 1.9 : 1) / pxPerUnit(inset, {w:2
 const WARDS = [...new Set(cams.map(c => c.ward))].filter(Boolean).sort();
 const wardHost = document.getElementById('wards'), rowEls = new Map(), wardEls = [];
 const recent = d => d && (new Date(meta.asof_iso) - new Date(d)) / 864e5 <= 92;
+const FLOOR = {spd:100, red:150, stp:100, trk:0};   // lowest fine per type, as in the citywide $ figure
+let WIN = 12;   // months shown in the ward list
+const winN = c => (c.m || []).slice(-WIN).reduce((a, v) => a + v, 0);
+const usd = v => v >= 1e6 ? `$${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : `$${Math.round(v / 1e3)}k`;
 for (const w of WARDS) {
   const band = cams.filter(c => c.ward === w).sort((a, b) => (b.n || 0) - (a.n || 0));
   const box = document.createElement('div'); box.className = 'ward';
@@ -414,6 +421,7 @@ for (const w of WARDS) {
     const tags = (c.s !== 'live' ? `<span class="tag">${c.s === 'warn' ? 'warning' : 'not live'}</span>` : '') + (recent(c.since) ? '<span class="tag">new</span>' : '') + (c.port ? '<span class="tag">portable</span>' : '');
     r.appendChild(g);
     r.insertAdjacentHTML('beforeend', `<span class="l">${c.loc}${tags}<small class="nb">near ${c.hood}</small></span><span class="t">${what}</span><span class="n">${fmt(c.n)}</span>`);
+    r.querySelector('.n').dataset.id = c.id;
     r.onclick = () => select(c.id, true); r.onkeydown = e => { if (e.key === 'Enter') select(c.id, true); };
     box.appendChild(r); rowEls.set(c.id, r);
   }
@@ -422,16 +430,20 @@ for (const w of WARDS) {
   box.appendChild(more); wardHost.appendChild(box);
   wardEls.push({box, band, more, svg:box.querySelector('svg'), wn:box.querySelector('.wn')});
 }
+document.querySelectorAll('#wwin button').forEach(b => b.onclick = () => {
+  WIN = +b.dataset.m; document.querySelectorAll('#wwin button').forEach(x => x.setAttribute('aria-pressed', x === b)); wardRefresh();
+});
 function wardRefresh() {
   const mx = Math.max(1, ...wardEls.map(W => W.band.filter(vis).length));
   for (const W of wardEls) {
-    const v = W.band.filter(vis), open = W.box.classList.contains('open');
+    const v = W.band.filter(vis).sort((a, b) => winN(b) - winN(a)), open = W.box.classList.contains('open');
+    v.forEach(c => { const r = rowEls.get(c.id); r.querySelector('.n').textContent = fmt(winN(c)); W.box.insertBefore(r, W.more); });
     W.box.classList.toggle('hide', !v.length);
     v.forEach((c, i) => rowEls.get(c.id).classList.toggle('extra', i >= 3));
     W.svg.innerHTML = ''; W.svg.setAttribute('viewBox', `0 0 ${mx} 10`);
     let x = 0;
     for (const t in TYPES) { const n = v.filter(c => c.t === t).length; if (!n) continue; el('rect', {x, y:0, width:Math.max(n - .35, .3), height:10, fill:`var(--${t})`}, W.svg); x += n; }
-    W.wn.textContent = `${v.length} cameras · ${big(v.reduce((a, c) => a + (c.n || 0), 0))} fines`;
+    W.wn.textContent = `${v.length} cameras · ${big(v.reduce((a, c) => a + winN(c), 0))} fines · ${usd(v.reduce((a, c) => a + winN(c) * FLOOR[c.t], 0))}`;
     W.more.hidden = v.length <= 3;
     W.more.textContent = open ? 'Show top 3' : `Show all ${v.length}`;
   }
@@ -525,6 +537,7 @@ function select(id, fromOutside) {
     ${CLICK_MODE === 'lens' ? '<svg class="lens" aria-hidden="true"></svg>' : ''}
     <div class="pop-h"><span class="pg"></span><b>${c.loc}</b>${what}</div>
     <div class="pop-sub">${sub.join('<i class="dot"></i>')}</div>
+    ${c.fix && c.fix.by ? `<div class="pop-fix">${c.fix.a === 'move' ? 'Location corrected' : 'Added to the map'} thanks to ${c.fix.by}. Thank you!</div>` : ''}
     <div class="pop-stats">
       <div><b>${c.n ? fmt(c.n) : '0'}</b><span>fines, 12 months</span></div>
       <div><b>${ev ? '1 / ' + ev : '—'}</b><span>${ev ? 'on average' : c.s === 'live' ? 'no fines logged' : 'not fining yet'}</span></div>

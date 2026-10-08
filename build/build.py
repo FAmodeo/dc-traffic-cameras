@@ -66,7 +66,11 @@ inset_parks = ''.join(geom_d(f['geometry'], 1) for f in load('parks.geojson'))
 
 # ---------- cameras ----------
 cams = pd.DataFrame([f['properties'] for f in json.load(open(DATA / 'cameras.geojson'))['features']])
-cams = cams[cams.ENFORCEMENT_TYPE != 'Truck Restriction'].reset_index(drop=True)   # out of scope: trucks only
+# hand-checked corrections (data/corrections.csv): 'move' fixes coordinates where DDOT's own description and position disagree;
+# 'include' shows a camera of a type otherwise left out. 'credit' thanks whoever reported it (first name + initial, or 'a visitor').
+COR = pd.read_csv(DATA / 'corrections.csv', dtype=str).fillna('') if (DATA / 'corrections.csv').exists() else pd.DataFrame(columns=['camera_id', 'action', 'lat', 'lon', 'credit'])
+INCLUDE = set(COR[COR.action == 'include'].camera_id)
+cams = cams[(cams.ENFORCEMENT_TYPE != 'Truck Restriction') | cams.ENFORCEMENT_SPACE_CODE.isin(INCLUDE)].reset_index(drop=True)   # trucks only where included
 tab = pd.read_csv(DATA / 'cameras_table.csv', usecols=['ENFORCEMENT_SPACE_CODE', 'START_DATE', 'ENFORCEMENT_TYPE', 'CAMERA_LATITUDE'])
 tab['START_DATE'] = pd.to_datetime(tab.START_DATE, unit='ms')
 cams = cams.merge(tab[['ENFORCEMENT_SPACE_CODE', 'START_DATE']], on='ENFORCEMENT_SPACE_CODE', how='left')
@@ -106,12 +110,11 @@ def pretty(s):
     return out + (f', {d}' if d else '')
 
 
-# hand-checked position fixes where DDOT's own description and coordinates disagree (data/position_overrides.csv)
-OVR = pd.read_csv(DATA / 'position_overrides.csv') if (DATA / 'position_overrides.csv').exists() else pd.DataFrame(columns=['camera_id', 'lat', 'lon'])
-for o in OVR.itertuples():
-    cams.loc[cams.ENFORCEMENT_SPACE_CODE == o.camera_id, ['CAMERA_LATITUDE', 'CAMERA_LONGITUDE']] = [o.lat, o.lon]
+for o in COR[COR.action == 'move'].itertuples():
+    cams.loc[cams.ENFORCEMENT_SPACE_CODE == o.camera_id, ['CAMERA_LATITUDE', 'CAMERA_LONGITUDE']] = [float(o.lat), float(o.lon)]
+FIX = {o.camera_id: dict(a=o.action, by=o.credit) for o in COR.itertuples()}
 
-TYPE = {'Speed': 'spd', 'Red Light': 'red', 'Stop Sign': 'stp'}
+TYPE = {'Speed': 'spd', 'Red Light': 'red', 'Stop Sign': 'stp', 'Truck Restriction': 'trk'}
 snapper = Snapper(BASE / 'streets_all.geojson', lambda lon, lat: ((lon - LON0) * KX * MILE, (lat - LAT0) * KY * MILE))
 M2U = U / MILE   # metres -> map units
 STAT = {'Live': 'live', 'Warning': 'warn'}   # anything else (Configuration, Test, Idle) = not yet live
@@ -127,7 +130,7 @@ for r in cams.itertuples():
                      m=[int(by_month.get((r.ENFORCEMENT_SPACE_CODE, mo), 0)) for mo in w_months],
                      since=r.START_DATE.strftime('%Y-%m-%d') if pd.notna(r.START_DATE) else None,
                      port=r.DEVICE_MOBILITY == 'Portable', ward=r.WARD, d=round(math.hypot(x, y) / U, 2), st=st,
-                     off=not sn['matched'] or (sn['dist'] or 0) > 30))
+                     off=not sn['matched'] or (sn['dist'] or 0) > 30, fix=FIX.get(r.ENFORCEMENT_SPACE_CODE)))
 recs.sort(key=lambda c: c['d'])
 
 # ---------- citywide figures for the landing screen ----------
@@ -278,8 +281,8 @@ ranked = sorted((c for c in recs if c['n']), key=lambda c: -c['n']); rank = {c['
 def pace(n):
     m = 365.25 * 1440 / n
     return f'{max(1, round(m))} min' if m < 60 else f'{round(m / 60)} h' if m < 2880 else f'{round(m / 1440)} days'
-KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stp': 'Stop-sign camera'}
-FINE = {'spd': '$100 for 11–15 mph over, rising to $150, $200 and $400–500 above that', 'red': '$150', 'stp': '$100'}
+KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stp': 'Stop-sign camera', 'trk': 'Truck-restriction camera'}
+FINE = {'spd': '$100 for 11–15 mph over, rising to $150, $200 and $400–500 above that', 'red': '$150', 'stp': '$100', 'trk': 'see DDOT'}
 STATUS = {'live': 'Fining', 'warn': 'Warning period (warnings only)', 'soon': 'Not live yet'}
 MON = lambda ym: dt.date(int(ym[:4]), int(ym[5:]), 1).strftime('%b %Y')
 slugof = lambda c: c['id'].replace(' ', '').lower()
@@ -294,7 +297,7 @@ CSS = (':root{--bg:#f3f4f5;--land:#fff;--ink:#111418;--ink-2:#4a5159;--muted:#66
        '.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;margin:0 0 1.2rem;padding:1rem;background:var(--land);border:1px solid var(--hair);border-radius:8px}'
        '.stats b{display:block;font-size:1.5rem;line-height:1.1}.stats span{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}'
        'table{width:100%;border-collapse:collapse;font-size:.9rem;margin:.3rem 0 1.2rem}td,th{padding:.25rem 0;border-bottom:1px solid var(--hair);text-align:left}td:last-child,th:last-child{text-align:right;font-variant-numeric:tabular-nums}'
-       'h2{font-size:1.05rem;margin:1.2rem 0 .3rem}ul{padding-left:1.1rem}li{margin:.2rem 0}.foot{margin-top:2rem;font-size:.75rem;color:var(--muted)}')
+       '.credit{font-size:.8rem;color:var(--muted);font-style:italic;margin-top:1.2rem}h2{font-size:1.05rem;margin:1.2rem 0 .3rem}ul{padding-left:1.1rem}li{margin:.2rem 0}.foot{margin-top:2rem;font-size:.75rem;color:var(--muted)}')
 def count_js(path):
     if not GC: return ''
     return ('<script>(function(){try{if(localStorage.getItem("dctc-nocount"))return}catch(e){}'
@@ -331,6 +334,8 @@ for c in recs:
             f'<h1>{E(c["loc"])}</h1>\n<p class="sub">{" · ".join(E(f) for f in facts)}</p>\n<a class="go" href="{go}">See it on the map →</a>\n{statbox}\n'
             f'<p>Fine if caught: {FINE.get(c["t"], "see DDOT")}. Cameras run 24/7. Ticket counts come from DDOT and cover {E(meta["window"])}.</p>\n{table}'
             f'<h2>Nearby cameras</h2><ul>{nearby}</ul>')
+    fx = c.get('fix')
+    if fx and fx.get('by'): body += f'<p class="credit">{"Location corrected" if fx["a"] == "move" else "Added to the map"} thanks to {E(fx["by"])}. Thank you!</p>'
     redirect = f'<script>if(location.hash==="#map")location.replace("{go}")</script>\n'
     d = CDIR / slug; d.mkdir()
     (d / 'index.html').write_text(cpage(path, title, desc, body + count_js(f'/c/{slug}/'), redirect=redirect))

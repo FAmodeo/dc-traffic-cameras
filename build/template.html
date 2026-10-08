@@ -165,6 +165,11 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .sharebox a:hover,.sharebox button:hover,.sharebox a:focus-visible,.sharebox button:focus-visible{background:var(--bg)}
 .sharebox .sb-copy{border-bottom:1px solid var(--hair);border-radius:5px 5px 0 0;margin-bottom:.2rem}
 .nojs{margin:1rem 0;padding:.8rem 1rem;border:1px solid var(--hair);border-radius:6px;background:var(--land)}
+.pop-fix{font-size:.72rem;color:var(--muted);font-style:italic;margin-top:.1rem}
+.wwin{display:inline-flex;gap:.15rem;vertical-align:baseline}
+.wwin button{all:unset;cursor:pointer;font:600 .78rem/1 var(--f-mono);padding:.12rem .32rem .08rem;border-radius:3px;color:var(--muted)}
+.wwin button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.wwin button:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
 .pop-x{position:absolute;top:.3rem;right:.35rem;width:2rem;height:2rem;border:0;background:none;color:var(--ink-2);font:400 1.4rem/1 var(--f-display);cursor:pointer}
 .pop-x:focus-visible{outline:2px solid var(--spd);outline-offset:1px}
 .pop-h{display:flex;gap:.55rem;align-items:center;padding-right:1.8rem}
@@ -524,7 +529,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
     </section>
     <section class="wards">
       <h2 class="sec">By ward</h2>
-      <p class="sub">Top 3 per ward<i class="dot"></i>fines in the last 12 months</p>
+      <p class="sub">Top 3 per ward<i class="dot"></i>fines and $ in the last <span class="wwin" id="wwin" role="group" aria-label="Months"><button type="button" data-m="3" aria-pressed="false">3</button><button type="button" data-m="6" aria-pressed="false">6</button><button type="button" data-m="12" aria-pressed="true">12</button></span> months</p>
       <div id="wards"></div>
       <div class="posterfoot" id="posterfoot"></div>
     </section>
