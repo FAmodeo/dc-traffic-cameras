@@ -11,9 +11,12 @@ const KEYTYPES = ['spd', 'red', 'stp'];   // legend rows; the rare truck camera 
 const STATS = {
   live:{name:'Fining', desc:'Tickets mailed to the owner'},
   warn:{name:'Warning period', desc:'New: warnings only, ~30 days'},
-  soon:{name:'Not live yet', desc:'Being set up or tested'}};
-const on = {spd:true, red:true, stp:true, trk:true, live:true, warn:true, soon:true};
+  soon:{name:'Not live yet', desc:'Being set up or tested'},
+  unv:{name:'Under verification', desc:'Reported by visitors; not in DDOT data yet'}};
+const KEYSTATS = ['live', 'warn', 'soon'];   // legend rows; reported-only cameras have none
+const on = {spd:true, red:true, stp:true, trk:true, live:true, warn:true, soon:true, unv:true};
 const cams = DATA.cams, meta = DATA.meta;
+const NLISTED = cams.filter(c => c.s !== 'unv').length;   // cameras in DDOT's data (reported-only ones excluded)
 const maxN = Math.max(...cams.map(c => c.n || 0));
 const rad = n => 0.646875 * (3 + 9 * Math.sqrt((n || 0) / maxN));   // big-map dot radius in px (0.5625 × 1.15)
 const fmt = n => n == null ? '—' : n.toLocaleString('en-US');
@@ -33,7 +36,7 @@ function shape(t, r) {
 function glyph(parent, t, s, r) {
   const [tag, at] = shape(t, r), g = el(tag, at, parent);
   g.setAttribute('class', 'm-' + s);
-  if (s === 'live') g.setAttribute('fill', `var(--${t})`); else g.setAttribute('stroke', `var(--${t})`);
+  if (s === 'live') g.setAttribute('fill', `var(--${t})`); else g.setAttribute('stroke', s === 'unv' ? 'var(--unv)' : `var(--${t})`);
   return g;
 }
 function mini(t, s, r = 5.5) {
@@ -160,7 +163,7 @@ function keyRow(host, k, info, glyphEl, n) {
   host.appendChild(b);
 }
 for (const t of KEYTYPES) keyRow(document.getElementById('keysType'), t, TYPES[t], mini(t, 'live', 6), count(c => c.t === t));
-for (const s in STATS) keyRow(document.getElementById('keysStat'), s, STATS[s], mini('spd', s, 6), count(c => c.s === s));
+for (const s of KEYSTATS) keyRow(document.getElementById('keysStat'), s, STATS[s], mini('spd', s, 6), count(c => c.s === s));
 document.getElementById('sizes').innerHTML = [1000, 10000, 40000, 90000].map(v => {
   const r = rad(v) * 1.15; return `<figure><svg viewBox="${-r - 2} ${-r - 2} ${2 * r + 4} ${2 * r + 4}" width="${(2 * r + 4) / 15}rem" aria-hidden="true"><circle r="${r}" fill="var(--muted)"/></svg><span class="num">${v / 1000}k</span></figure>`;
 }).join('');
@@ -168,10 +171,10 @@ const um = meta.unmapped;
 document.getElementById('unmapped').innerHTML = `<p><strong>${(um['Clear Lane'] || 0) + (um['School Bus'] || 0)} cameras ride on buses</strong> (bus lanes, school-bus stop arms): no fixed spot to map. Truck-route cameras left out, bar one visitors reported.</p>`;
 function stats() {
   const v = cams.filter(vis);
-  document.getElementById('tot').textContent = v.length;
+  document.getElementById('tot').textContent = v.filter(c => c.s !== 'unv').length;
   for (const t of KEYTYPES) document.querySelector(`#key-${t} .kn`).textContent = count(c => c.t === t && on[c.s]);
-  for (const k in STATS) document.querySelector(`#key-${k} .kn`).textContent = count(c => c.s === k && on[c.t]);
-  document.getElementById('split').innerHTML = Object.keys(STATS).filter(s => on[s]).map(s => `<span><b class="num">${v.filter(c => c.s === s).length}</b> ${STATS[s].name.toLowerCase()}</span>`).join('');
+  for (const k of KEYSTATS) document.querySelector(`#key-${k} .kn`).textContent = count(c => c.s === k && on[c.t]);
+  document.getElementById('split').innerHTML = KEYSTATS.filter(s => on[s]).map(s => `<span><b class="num">${v.filter(c => c.s === s).length}</b> ${STATS[s].name.toLowerCase()}</span>`).join('');
 }
 
 const nb = Math.ceil(meta.maxd);
@@ -537,11 +540,11 @@ function select(id, fromOutside) {
     ${CLICK_MODE === 'lens' ? '<svg class="lens" aria-hidden="true"></svg>' : ''}
     <div class="pop-h"><span class="pg"></span><b>${c.loc}</b>${what}</div>
     <div class="pop-sub">${sub.join('<i class="dot"></i>')}</div>
-    ${c.fix && c.fix.by ? `<div class="pop-fix">${c.fix.a === 'move' ? 'Location corrected' : 'Added to the map'} thanks to ${c.fix.by}. Thank you!</div>` : ''}
+    ${c.fix && c.fix.by ? `<div class="pop-fix">${({move:'Location corrected', include:'Added to the map', report:'Reported'})[c.fix.a]} thanks to ${c.fix.by.replace(/\.$/, '')}. Thank you!</div>` : ''}
     <div class="pop-stats">
       <div><b>${c.n ? fmt(c.n) : '0'}</b><span>fines, 12 months</span></div>
       <div><b>${ev ? '1 / ' + ev : '—'}</b><span>${ev ? 'on average' : c.s === 'live' ? 'no fines logged' : 'not fining yet'}</span></div>
-      <div><b>${rk ? '#' + rk : '—'}</b><span>of ${cams.length} cameras</span></div>
+      <div><b>${rk ? '#' + rk : '—'}</b><span>of ${NLISTED} cameras</span></div>
     </div>
     ${c.n ? `<div class="pop-bars"></div><div class="pop-cap"><span>${monthName(meta.months[0])}</span><span>fines per month</span><span>${monthName(meta.months[meta.months.length - 1])}</span></div>` : ''}
     <div class="pop-acts"><span><button class="pop-got" type="button"></button><button class="pop-less" type="button" aria-label="Remove one" hidden>−</button></span><button class="pop-share" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Share this camera</button></div>`;
@@ -549,7 +552,7 @@ function select(id, fromOutside) {
   if (c.n) pop.querySelector('.pop-bars').appendChild(bars(c));
   pop.querySelector('.pop-x').onclick = closePop;
   pop.querySelector('.pop-share').onclick = e => share(e.currentTarget, {title:`${c.loc} · DC Traffic Cameras`,
-    text:c.n ? `This camera on ${c.loc} issued ${fmt(c.n)} fines in 12 months, one every ${ev}. #${rk} of ${cams.length} in DC.` : `${TYPES[c.t].name} camera on ${c.loc}, not fining yet.`,
+    text:c.n ? `This camera on ${c.loc} issued ${fmt(c.n)} fines in 12 months, one every ${ev}. #${rk} of ${NLISTED} in DC.` : `${TYPES[c.t].name} camera on ${c.loc}, not fining yet.`,
     url:`${SITE_URL}c/${slugOf(c.id)}/#map`});
   const got = pop.querySelector('.pop-got'), less = pop.querySelector('.pop-less'), sl = slugOf(c.id);
   const paint = () => { const k = TAB[sl] || 0; got.textContent = k ? `Got me${k > 1 ? ' ×' + k : ''} ✓` : 'This one got me'; got.classList.toggle('on', !!k); less.hidden = !k; };
@@ -615,7 +618,7 @@ if (meta.site.tip_url) {
   document.getElementById('tkAmts').innerHTML = amts.map(a => `<a class="tk-pay" href="${a.url}" target="_blank" rel="noopener">${a.label}</a>`).join(''); tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
-if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${cams.length} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
+if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${NLISTED} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
 // suggestion box: with a Google Form configured, notes post in place (no account, no redirect); else the GitHub form
 (function suggest() {
   const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');

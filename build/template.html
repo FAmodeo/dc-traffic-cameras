@@ -29,7 +29,7 @@
   --bg:#f3f4f5; --land:#ffffff; --edge:#b8bfc6; --water:#d9e4ec; --park:#ecf1ea;
   --road-min:#e3e6e9; --road:#c9ced3; --road-fwy:#9ea6ae; --ring:#8f98a2;
   --ink:#111418; --ink-2:#4a5159; --muted:#666e77; --hair:#dde0e3;
-  --spd:#2a78d6; --red:#eb6834; --stp:#1baf7a; --trk:#52514e; --red-ink:#c2491a; --red-btn:#c2491a; --spd-ink:#226ac2;
+  --spd:#2a78d6; --red:#eb6834; --stp:#1baf7a; --trk:#52514e; --red-ink:#c2491a; --red-btn:#c2491a; --spd-ink:#226ac2; --unv:#c99a06;
   --water-ink:#5f84a3; --park-ink:#6c8a66; --sel:#111418;
   --f-display:"Overpass","Helvetica Neue",Arial,sans-serif;
   --f-mono:"Overpass Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -39,13 +39,13 @@
   --bg:#0f1113; --land:#1a1c1f; --edge:#3f454b; --water:#1c2833; --park:#1b221c;
   --road-min:#24272b; --road:#33383d; --road-fwy:#4f575f; --ring:#66707a;
   --ink:#f2f4f5; --ink-2:#b9c0c7; --muted:#88909a; --hair:#2a2e32;
-  --spd:#3987e5; --red:#d95926; --stp:#199e70; --trk:#a3a6aa; --red-ink:#f07a48; --red-btn:#c2491a; --spd-ink:#3987e5;
+  --spd:#3987e5; --red:#d95926; --stp:#199e70; --trk:#a3a6aa; --red-ink:#f07a48; --red-btn:#c2491a; --spd-ink:#3987e5; --unv:#e8b923;
   --water-ink:#7fa3c2; --park-ink:#86a27f; --sel:#f2f4f5; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1113; --land:#1a1c1f; --edge:#3f454b; --water:#1c2833; --park:#1b221c;
   --road-min:#24272b; --road:#33383d; --road-fwy:#4f575f; --ring:#66707a;
   --ink:#f2f4f5; --ink-2:#b9c0c7; --muted:#88909a; --hair:#2a2e32;
-  --spd:#3987e5; --red:#d95926; --stp:#199e70; --trk:#a3a6aa; --red-ink:#f07a48; --red-btn:#c2491a; --spd-ink:#3987e5;
+  --spd:#3987e5; --red:#d95926; --stp:#199e70; --trk:#a3a6aa; --red-ink:#f07a48; --red-btn:#c2491a; --spd-ink:#3987e5; --unv:#e8b923;
   --water-ink:#7fa3c2; --park-ink:#86a27f; --sel:#f2f4f5; color-scheme:dark}
 
 
@@ -359,6 +359,7 @@ svg text{font-family:var(--f-display)}
 .sb:last-child i{border-top:1.2px solid var(--ink-2);border-bottom:0}
 .m-warn{fill:var(--land);stroke-width:1.9}
 .m-soon{fill:var(--land);stroke-width:1.3;stroke-dasharray:2.2 1.6}
+.m-unv{fill:color-mix(in srgb,var(--unv) 22%,var(--land));stroke-width:1.6;stroke-dasharray:2.4 1.6}
 .hit{fill:transparent;cursor:pointer}
 .cs{transform:scale(var(--s,1))}
 #map .lbl{transform:scale(var(--sl,1))}

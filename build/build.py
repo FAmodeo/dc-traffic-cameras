@@ -69,6 +69,7 @@ cams = pd.DataFrame([f['properties'] for f in json.load(open(DATA / 'cameras.geo
 # hand-checked corrections (data/corrections.csv): 'move' fixes coordinates where DDOT's own description and position disagree;
 # 'include' shows a camera of a type otherwise left out. 'credit' thanks whoever reported it (first name + initial, or 'a visitor').
 COR = pd.read_csv(DATA / 'corrections.csv', dtype=str).fillna('') if (DATA / 'corrections.csv').exists() else pd.DataFrame(columns=['camera_id', 'action', 'lat', 'lon', 'credit'])
+for col in ('type', 'location', 'ward'): COR[col] = COR[col] if col in COR else ''
 INCLUDE = set(COR[COR.action == 'include'].camera_id)
 cams = cams[(cams.ENFORCEMENT_TYPE != 'Truck Restriction') | cams.ENFORCEMENT_SPACE_CODE.isin(INCLUDE)].reset_index(drop=True)   # trucks only where included
 tab = pd.read_csv(DATA / 'cameras_table.csv', usecols=['ENFORCEMENT_SPACE_CODE', 'START_DATE', 'ENFORCEMENT_TYPE', 'CAMERA_LATITUDE'])
@@ -131,7 +132,19 @@ for r in cams.itertuples():
                      since=r.START_DATE.strftime('%Y-%m-%d') if pd.notna(r.START_DATE) else None,
                      port=r.DEVICE_MOBILITY == 'Portable', ward=r.WARD, d=round(math.hypot(x, y) / U, 2), st=st,
                      off=not sn['matched'] or (sn['dist'] or 0) > 30, fix=FIX.get(r.ENFORCEMENT_SPACE_CODE)))
+# 'report': a camera several visitors describe that DDOT does not list (yet); shown dashed yellow as under verification,
+# with no ticket figures and outside every total
+for o in COR[COR.action == 'report'].itertuples():
+    t = {'speed': 'spd', 'red light': 'red', 'stop sign': 'stp'}.get(o.type.lower(), 'stp')
+    lon, lat = float(o.lon), float(o.lat); x, y = P(lon, lat)
+    sn = snapper.snap(lon, lat, o.location, t)
+    st = [[round(a * M2U, 1), round(-b * M2U, 1)] for a, b in sn['stretch']] if sn['matched'] and sn['stretch'] else None
+    if st and sn.get('snapped') and (sn['dist'] or 0) <= 30: x, y = sn['snapped'][0] * M2U, -sn['snapped'][1] * M2U
+    recs.append(dict(id=o.camera_id, x=round(x, 1), y=round(y, 1), t=t, s='unv', raw='Reported', lim=None, loc=pretty(o.location), n=None,
+                     m=[0] * len(w_months), since=None, port=False, ward=o.ward, d=round(math.hypot(x, y) / U, 2), st=st,
+                     off=not sn['matched'], fix=dict(a='report', by=o.credit)))
 recs.sort(key=lambda c: c['d'])
+NL = sum(1 for c in recs if c['s'] != 'unv')   # cameras in DDOT's data
 
 # ---------- citywide figures for the landing screen ----------
 FLOOR = {'Speed': 100, 'Red Light': 150, 'Stop Sign': 100}   # lowest fine per type (DDOT StreetSafe FAQ)
@@ -185,6 +198,8 @@ hood_pts = sorted(({'n': f['properties']['NAME'], 'x': round(P(*f['geometry']['c
                   key=lambda h: h['n'])
 official = {h['n']: h for h in hood_pts}
 for c in recs: c['hood'] = min(hood_pts, key=lambda h: (h['x'] - c['x']) ** 2 + (h['y'] - c['y']) ** 2)['n']
+for c in recs:   # reported cameras without a ward take the ward of the nearest listed camera
+    if not c['ward']: c['ward'] = min((o for o in recs if o['ward']), key=lambda o: (o['x'] - c['x']) ** 2 + (o['y'] - c['y']) ** 2)['ward']
 ALIAS_HOOD = {'Anacostia': 'Historic Anacostia'}
 for i, (lon, lat, t, k) in enumerate(LABELS):
     h = official.get(ALIAS_HOOD.get(t, t))
@@ -283,7 +298,7 @@ def pace(n):
     return f'{max(1, round(m))} min' if m < 60 else f'{round(m / 60)} h' if m < 2880 else f'{round(m / 1440)} days'
 KIND = {'spd': 'Speed camera', 'red': 'Red-light camera', 'stp': 'Stop-sign camera', 'trk': 'Truck-restriction camera'}
 FINE = {'spd': '$100 for 11–15 mph over, rising to $150, $200 and $400–500 above that', 'red': '$150', 'stp': '$100', 'trk': 'see DDOT'}
-STATUS = {'live': 'Fining', 'warn': 'Warning period (warnings only)', 'soon': 'Not live yet'}
+STATUS = {'live': 'Fining', 'warn': 'Warning period (warnings only)', 'soon': 'Not live yet', 'unv': 'Reported by visitors, under verification (not in DDOT data yet)'}
 MON = lambda ym: dt.date(int(ym[:4]), int(ym[5:]), 1).strftime('%b %Y')
 slugof = lambda c: c['id'].replace(' ', '').lower()
 E = _h.escape
@@ -319,13 +334,13 @@ months = meta['months']
 for c in recs:
     slug = slugof(c); path = f'c/{slug}/'; go = f'../../#cam-{slug}'; kind = KIND.get(c['t'], 'Camera')
     title = f"{kind}: {c['loc']} · DC Traffic Cameras"
-    desc = (f"{kind} at {c['loc']}, Washington DC: {c['n']:,} tickets in 12 months, one every {pace(c['n'])} on average, #{rank[c['id']]} of {len(recs)} DC cameras."
+    desc = (f"{kind} at {c['loc']}, Washington DC: {c['n']:,} tickets in 12 months, one every {pace(c['n'])} on average, #{rank[c['id']]} of {NL} DC cameras."
             if c['n'] else f"{kind} at {c['loc']}, Washington DC. {STATUS.get(c['s'], '')}.")
     facts = [f"{kind}", STATUS.get(c['s'], c['s'])] + ([f"Posted limit {c['lim']} mph"] if c.get('lim') and c['t'] == 'spd' else []) \
             + [f"Near {c['hood']}, Ward {c['ward']}"] + ([f"Since {dt.date.fromisoformat(c['since']).strftime('%b %Y')}"] if c.get('since') else []) \
             + (['Portable unit'] if c.get('port') else [])
     statbox = (f'<div class="stats"><div><b>{c["n"]:,}</b><span>tickets, 12 months</span></div><div><b>1 / {pace(c["n"])}</b><span>on average</span></div>'
-             f'<div><b>#{rank[c["id"]]}</b><span>of {len(recs)} cameras</span></div></div>') if c['n'] else ''
+             f'<div><b>#{rank[c["id"]]}</b><span>of {NL} cameras</span></div></div>') if c['n'] else ''
     m = c.get('m') or []
     table = ('<h2>Tickets per month</h2><table><tr><th>Month</th><th>Tickets</th></tr>' +
              ''.join(f'<tr><td>{MON(ym)}</td><td>{v:,}</td></tr>' for ym, v in zip(months, m)) + '</table>') if c['n'] and m else ''
@@ -335,7 +350,7 @@ for c in recs:
             f'<p>Fine if caught: {FINE.get(c["t"], "see DDOT")}. Cameras run 24/7. Ticket counts come from DDOT and cover {E(meta["window"])}.</p>\n{table}'
             f'<h2>Nearby cameras</h2><ul>{nearby}</ul>')
     fx = c.get('fix')
-    if fx and fx.get('by'): body += f'<p class="credit">{"Location corrected" if fx["a"] == "move" else "Added to the map"} thanks to {E(fx["by"])}. Thank you!</p>'
+    if fx and fx.get('by'): body += f'<p class="credit">{ {"move": "Location corrected", "include": "Added to the map", "report": "Reported"}[fx["a"]] } thanks to {E(fx["by"].rstrip("."))}. Thank you!</p>'
     redirect = f'<script>if(location.hash==="#map")location.replace("{go}")</script>\n'
     d = CDIR / slug; d.mkdir()
     (d / 'index.html').write_text(cpage(path, title, desc, body + count_js(f'/c/{slug}/'), redirect=redirect))
@@ -346,8 +361,8 @@ lst = ''.join(f'<h2>Ward {w} · {len(cs)} cameras</h2><ul>' + ''.join(
     f'<li><a href="{slugof(c)}/">{E(c["loc"])}</a> ({KIND.get(c["t"], "camera").lower()}{", " + format(c["n"], ",") + " tickets" if c["n"] else ", not fining yet"})</li>'
     for c in sorted(cs, key=lambda c: -(c['n'] or 0))) + '</ul>' for w, cs in sorted(wards.items()))
 (CDIR / 'index.html').write_text(cpage('c/', 'All traffic cameras in Washington DC, by ward · DC Traffic Cameras',
-    f'Every one of DC\'s {len(recs)} fixed speed, red-light and stop-sign cameras, listed by ward with tickets issued over {meta["window"]}.',
-    f'<p class="crumb"><a href="../">DC Traffic Cameras</a> › All cameras</p>\n<h1>All {len(recs)} traffic cameras in DC</h1>\n'
+    f'Every one of DC\'s {NL} fixed speed, red-light and stop-sign cameras, listed by ward with tickets issued over {meta["window"]}.',
+    f'<p class="crumb"><a href="../">DC Traffic Cameras</a> › All cameras</p>\n<h1>All {NL} traffic cameras in DC</h1>\n'
     f'<p class="sub">By ward, busiest first. Tickets over {E(meta["window"])}.</p>\n<a class="go" href="../">Open the map →</a>\n{lst}' + count_js('/c/')))
 # sitemap for search engines
 urls = [site, site + 'c/'] + [f'{site}c/{slugof(c)}/' for c in recs]
