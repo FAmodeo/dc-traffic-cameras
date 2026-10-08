@@ -231,6 +231,8 @@ h1,h2,h3{text-wrap:balance;margin:0;font-weight:800;letter-spacing:-.01em}
 .sg-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.45rem;font-size:.72rem;color:var(--muted)}
 .sg-row button{font:700 .82rem/1 var(--f-display);padding:.5rem .95rem .42rem;border-radius:4px;border:0;background:var(--ink);color:var(--bg);cursor:pointer}
 .sg-row button:disabled{opacity:.5;cursor:default}
+.sg-done a{color:var(--red-ink);font-weight:700}
+.sg-done span{display:block;margin-top:.25rem;font-weight:400;color:var(--ink-2)}
 .sg-done{margin:0;padding:0 .7rem .65rem;color:var(--ink);font-weight:600}
 .suggest[hidden],.sg-form[hidden],.sg-done[hidden]{display:none}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -505,7 +507,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
           <input class="vh" id="sgWeb" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="sg-row"><span>Anonymous unless you add your name.</span><button type="submit" id="sgSend">Send</button></div>
         </form>
-        <p class="sg-done" id="sgDone" hidden role="status">Got it, thanks. Every note gets read.</p>
+        <p class="sg-done" id="sgDone" hidden role="status">Got it, thanks. I read every note and fix what checks out.<span id="sgCoffee"></span></p>
       </div>
       <aside class="ticket" id="ticket" hidden aria-label="Tip jar">
         <div class="tk-main">
@@ -1153,6 +1155,7 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
 (function suggest() {
   const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');
   const txt = document.getElementById('sgText'), done = document.getElementById('sgDone'), send = document.getElementById('sgSend');
+  if (S2.tip_url) document.getElementById('sgCoffee').innerHTML = `If the map helps you, <a href="${S2.tip_url}" target="_blank" rel="noopener">☕ buy me a coffee</a>.`;
   const inline = !!(S2.note_form && S2.note_entry);
   if (!inline && !S2.feedback_url) return;
   box.hidden = false;

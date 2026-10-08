@@ -606,6 +606,7 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
 (function suggest() {
   const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');
   const txt = document.getElementById('sgText'), done = document.getElementById('sgDone'), send = document.getElementById('sgSend');
+  if (S2.tip_url) document.getElementById('sgCoffee').innerHTML = `If the map helps you, <a href="${S2.tip_url}" target="_blank" rel="noopener">☕ buy me a coffee</a>.`;
   const inline = !!(S2.note_form && S2.note_entry);
   if (!inline && !S2.feedback_url) return;
   box.hidden = false;
