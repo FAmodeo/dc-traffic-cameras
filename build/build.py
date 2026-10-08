@@ -106,6 +106,11 @@ def pretty(s):
     return out + (f', {d}' if d else '')
 
 
+# hand-checked position fixes where DDOT's own description and coordinates disagree (data/position_overrides.csv)
+OVR = pd.read_csv(DATA / 'position_overrides.csv') if (DATA / 'position_overrides.csv').exists() else pd.DataFrame(columns=['camera_id', 'lat', 'lon'])
+for o in OVR.itertuples():
+    cams.loc[cams.ENFORCEMENT_SPACE_CODE == o.camera_id, ['CAMERA_LATITUDE', 'CAMERA_LONGITUDE']] = [o.lat, o.lon]
+
 TYPE = {'Speed': 'spd', 'Red Light': 'red', 'Stop Sign': 'stp'}
 snapper = Snapper(BASE / 'streets_all.geojson', lambda lon, lat: ((lon - LON0) * KX * MILE, (lat - LAT0) * KY * MILE))
 M2U = U / MILE   # metres -> map units
