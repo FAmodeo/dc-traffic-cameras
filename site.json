@@ -28,7 +28,7 @@
       "url": "https://donate.stripe.com/28EeVfbnY0ea1mcfGz4ow01"
     }
   ],
-  "newsletter": false,
+  "newsletter": true,
   "supporter_url": "https://buy.stripe.com/aFa00l77IaSO0i83XR4ow05",
   "supporter_label": "$1.99 a month",
   "supporter_manage": "https://billing.stripe.com/p/login/7sYeVffEe5yugh61PJ4ow00"
