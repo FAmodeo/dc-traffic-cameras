@@ -618,7 +618,7 @@ if (meta.site.tip_url) {
   document.getElementById('tkAmts').innerHTML = amts.map(a => `<a class="tk-pay" href="${a.url}" target="_blank" rel="noopener">${a.label}</a>`).join(''); tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
-if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${NLISTED} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
+if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${NLISTED} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.newsletter && meta.site.note_form ? ` · <a id="footMonthly" href="#nl">Monthly email for your ward</a>` : '') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
 // suggestion box: with a Google Form configured, notes post in place (no account, no redirect); else the GitHub form
 (function suggest() {
   const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');
@@ -641,6 +641,28 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
     catch (err) { send.disabled = false; send.textContent = 'Retry'; return; }
     txt.value = ''; document.getElementById('sgName').value = document.getElementById('sgMail').value = ''; send.disabled = false; send.textContent = 'Send'; form.hidden = true; box.classList.remove('open'); open.setAttribute('aria-expanded', false); done.hidden = false;
   };
+})();
+
+// monthly ward email: sign-ups post to the same Google Form as suggestions, marked "[monthly email] Ward N"; the
+// Apps Script in the project account files them separately and sends the latest issue at once
+(function newsletter() {
+  const S2 = meta.site; if (!S2.newsletter || !S2.note_form || !S2.note_email_entry || poster || cardmode) return;
+  const form = document.getElementById('nl'), mail = document.getElementById('nlMail'), ward = document.getElementById('nlWard'),
+        send = document.getElementById('nlSend'), done = document.getElementById('nlDone'), row = form.querySelector('.nl-row');
+  const HINT = ['Columbia Heights, Adams Morgan', 'Downtown, Dupont, Georgetown', 'Cleveland Park, Tenleytown', 'Petworth, Takoma',
+                'Brookland, Trinidad', 'Capitol Hill, Navy Yard', 'Deanwood, Benning', 'Anacostia, Congress Heights'];
+  ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} · ${h}</option>`).join(''));
+  form.hidden = false;
+  form.onsubmit = async e => {
+    e.preventDefault(); const em = mail.value.trim(), w = ward.value; if (!em || !w) return;
+    send.disabled = true; send.textContent = 'Signing up…';
+    try { if (!document.getElementById('nlWeb').value) await fetch(S2.note_form, {method:'POST', mode:'no-cors',
+      body:new URLSearchParams({[S2.note_entry]:`[monthly email] Ward ${w}`, [S2.note_email_entry]:em})}); }
+    catch (err) { send.disabled = false; send.textContent = 'Retry'; return; }
+    row.hidden = true; form.querySelector('.nl-lab').hidden = true; done.hidden = false;
+    done.innerHTML = `You're in. Last month's numbers for Ward ${w} are on their way to your inbox.<span>Not there in a few minutes? Check spam or promotions.</span>`;
+  };
+  const fl = document.getElementById('footMonthly'); if (fl) fl.onclick = e => { e.preventDefault(); form.scrollIntoView({block:'center'}); mail.focus({preventScroll:true}); };
 })();
 
 function layout() { if (poster) document.documentElement.style.setProperty('--mk', 2.2); if (cardmode) document.documentElement.style.setProperty('--mk', 1.5); setVB(); setInsetScale(); }

@@ -69,7 +69,7 @@ cams = pd.DataFrame([f['properties'] for f in json.load(open(DATA / 'cameras.geo
 # hand-checked corrections (data/corrections.csv): 'move' fixes coordinates where DDOT's own description and position disagree;
 # 'include' shows a camera of a type otherwise left out. 'credit' thanks whoever reported it (first name + initial, or 'a visitor').
 COR = pd.read_csv(DATA / 'corrections.csv', dtype=str).fillna('') if (DATA / 'corrections.csv').exists() else pd.DataFrame(columns=['camera_id', 'action', 'lat', 'lon', 'credit'])
-for col in ('type', 'location', 'ward'): COR[col] = COR[col] if col in COR else ''
+for col in ('type', 'location', 'ward', 'added'): COR[col] = COR[col] if col in COR else ''
 INCLUDE = set(COR[COR.action == 'include'].camera_id)
 cams = cams[(cams.ENFORCEMENT_TYPE != 'Truck Restriction') | cams.ENFORCEMENT_SPACE_CODE.isin(INCLUDE)].reset_index(drop=True)   # trucks only where included
 tab = pd.read_csv(DATA / 'cameras_table.csv', usecols=['ENFORCEMENT_SPACE_CODE', 'START_DATE', 'ENFORCEMENT_TYPE', 'CAMERA_LATITUDE'])
@@ -368,6 +368,10 @@ lst = ''.join(f'<h2>Ward {w} · {len(cs)} cameras</h2><ul>' + ''.join(
 urls = [site, site + 'c/'] + [f'{site}c/{slugof(c)}/' for c in recs]
 (OUT.parent / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     ''.join(f'<url><loc>{u}</loc><lastmod>{meta["asof_iso"]}</lastmod></url>\n' for u in urls) + '</urlset>\n')
+# monthly ward email (docs/letter/latest.json), sent by the Apps Script in the project Google account
+import letter
+issue, changes, credits = letter.build(recs, COR, w_months, fetched, SITE, OUT.parent, DATA, slugof)
 if '--artifact' in sys.argv: (HERE.parent / 'dc_traffic_cameras.html').write_text(page)   # private preview copy only
 print(f'{OUT.name}: {len(page)/1e6:.2f} MB, {len(recs)} cameras, max distance {meta["maxd"]} mi, window {meta["window"]}')
+print('letter', issue['id'], '| changes per ward', changes, '| credits', credits)
 print('unmapped', unmapped, '| last record', meta['last_record'], '| fines 12m', f"{stats['fines']:,}", '| every', stats['sec'], 's | floor $', f"{stats['usd']:,}")

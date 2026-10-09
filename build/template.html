@@ -288,6 +288,21 @@ table.fines{width:100%;border-collapse:collapse;font-size:.8rem}
 .tip{font-size:.8rem;color:var(--ink-2)}
 .tip a{color:var(--ink);font-weight:700}
 .posterfoot{display:none;font-size:.72rem;color:var(--muted)}
+/* monthly ward email sign-up, under the ward list */
+.nl{margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--hair)}
+.nl-lab{margin:0 0 .5rem;font-size:.82rem;color:var(--ink-2)}
+.nl-lab b{color:var(--ink)}
+.nl-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:.4rem}
+.nl-row input,.nl-row select{box-sizing:border-box;min-width:0;font:400 16px/1.2 var(--f-display);color:var(--ink);background:var(--land);border:1px solid var(--hair);border-radius:4px;padding:.42rem .5rem}
+.nl-row select{max-width:11.5rem}
+.nl-row input:focus,.nl-row select:focus{outline:2px solid var(--spd);outline-offset:0;border-color:transparent}
+@media (pointer:fine){.nl-row input,.nl-row select{font-size:.85rem}}
+.nl-row button{font:700 .82rem/1 var(--f-display);padding:.5rem .95rem .42rem;border-radius:4px;border:0;background:var(--ink);color:var(--bg);cursor:pointer}
+.nl-row button:disabled{opacity:.5;cursor:default}
+.nl-done{margin:.1rem 0 0;font-size:.85rem;font-weight:600;color:var(--ink)}
+.nl-done span{display:block;font-weight:400;color:var(--ink-2)}
+@media (max-width:560px){.nl-row{grid-template-columns:minmax(0,1fr) auto}.nl-row input{grid-column:1/-1}.nl-row select{max-width:none}}
+html.poster .nl,html.cardmode .nl{display:none}
 .zoom{position:absolute;right:.6rem;top:.6rem;display:flex;flex-direction:column;gap:4px}
 .zoom button{width:2.1rem;height:2.1rem;border:1px solid var(--hair);background:var(--land);color:var(--ink);border-radius:3px;font:600 1.1rem/1 var(--f-display);cursor:pointer}
 .zoom button:focus-visible,.key:focus-visible,.row:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
@@ -534,6 +549,16 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
       <h2 class="sec">By ward</h2>
       <p class="sub">Top 3 per ward<i class="dot"></i>fines and $ in the last <span class="wwin" id="wwin" role="group" aria-label="Months"><button type="button" data-m="3" aria-pressed="false">3</button><button type="button" data-m="6" aria-pressed="false">6</button><button type="button" data-m="12" aria-pressed="true">12</button></span> months</p>
       <div id="wards"></div>
+      <form class="nl" id="nl" hidden>
+        <p class="nl-lab"><b>Your ward, every month.</b> Tickets, fines and camera changes, by email. Free; unsubscribe anytime.</p>
+        <div class="nl-row">
+          <input type="email" id="nlMail" placeholder="Email" autocomplete="email" required aria-label="Email">
+          <select id="nlWard" required aria-label="Ward"><option value="">Ward</option></select>
+          <button type="submit" id="nlSend">Sign up</button>
+        </div>
+        <input class="vh" id="nlWeb" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <p class="nl-done" id="nlDone" hidden role="status"></p>
+      </form>
       <div class="posterfoot" id="posterfoot"></div>
     </section>
   </section>
