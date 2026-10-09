@@ -1235,7 +1235,7 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
         send = document.getElementById('nlSend'), done = document.getElementById('nlDone'), row = form.querySelector('.nl-row');
   const HINT = ['Columbia Heights, Adams Morgan', 'Downtown, Dupont, Georgetown', 'Cleveland Park, Tenleytown', 'Petworth, Takoma',
                 'Brookland, Trinidad', 'Capitol Hill, Navy Yard', 'Deanwood, Benning', 'Anacostia, Congress Heights'];
-  ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} · ${h}</option>`).join(''));
+  ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} (${h})</option>`).join(''));
   form.hidden = false;
   form.onsubmit = async e => {
     e.preventDefault(); const em = mail.value.trim(), w = ward.value; if (!em || !w) return;
