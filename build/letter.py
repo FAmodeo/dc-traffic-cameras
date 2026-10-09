@@ -74,7 +74,9 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
     city_usd = sum(c['m'][-1] * FL[c['t']] for c in real)
     pills = ''.join(f'<a href="{E(a["url"])}" style="display:inline-block;margin:0 6px 6px 0;padding:7px 13px;border:1.5px solid {RED};'
                     f'border-radius:999px;color:{RED};font:700 14px/1 {SANS};text-decoration:none">{E(a["label"])}</a>' for a in site.get('tip_amounts', []))
-    monthly = site.get('supporter_url')
+    monthly, manage = site.get('supporter_url'), site.get('supporter_manage')
+    sp = data / 'supporters.csv'   # monthly supporters who typed a name for the thanks line (first name + initial)
+    backers = [l.split(',')[0].strip() for l in sp.read_text().splitlines()[1:] if l.strip()] if sp.exists() else []
     issue = dict(id=cur, label=last, built=fetched.isoformat(), wards={})
     for w in WARDS:
         cs = [c for c in real if str(c['ward']) == w]
@@ -112,12 +114,14 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
             f'<p style="margin:0 0 10px;color:{INK}">This map is free and has no ads. If it saved you a ticket, please consider buying me a coffee ☕ '
             f'to keep it free and accessible to everyone.</p>{pills}'
             + (f'<p style="margin:4px 0 4px;font-size:13px;color:{INK2}">Or <a href="{E(monthly)}" style="color:{RED}">chip in {E(site.get("supporter_label", "monthly"))}</a> to keep these emails coming. Cancel anytime.</p>' if monthly else '')
+            + (f'<p style="margin:6px 0 4px;font-size:13px;color:{INK2}">Kept going by {E(", ".join(backers))}. Thank you!</p>' if backers else '')
             + '</div>',
             f'<p style="margin:22px 0 0;color:{INK}">Drive safe,<br>DC Traffic Cameras Map Team<br><a href="{site_url}" style="color:{BLUE}">{site_url.split("//")[1].rstrip("/")}</a></p>',
         ]
         fine = (f'Last data: {last}. DDOT publishes each month\'s ticket counts around the 10th of the next month. Dollar figures use '
                 f'the lowest fine for each camera type. You get this email because you signed up for Ward {w} on the map; to switch wards, '
-                f'sign up again with the new one. <a href="{{{{UNSUB}}}}" style="color:{MUTED}">Unsubscribe</a>.')
+                f'sign up again with the new one. <a href="{{{{UNSUB}}}}" style="color:{MUTED}">Unsubscribe</a>.'
+                + (f' Monthly supporters can <a href="{E(manage)}" style="color:{MUTED}">cancel anytime here</a>.' if manage else ''))
         html = (f'<div style="background:#f3f4f5;padding:22px 10px"><div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid {HAIR};'
                 f'border-radius:8px;padding:24px 22px;font:400 15px/1.5 {SANS};color:{INK}">' + '\n'.join(body) + '</div>'
                 f'<p style="max-width:560px;margin:14px auto 0;font:400 11.5px/1.5 {SANS};color:{MUTED}">{fine}</p></div>')
@@ -131,9 +135,11 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
                 '', 'This map is free and has no ads. If it saved you a ticket, please consider buying me a coffee ☕ to keep it free and accessible to everyone:']
         txt += [f'{"Other amount" if a["label"] == "Other" else a["label"]}: {a["url"]}' for a in site.get('tip_amounts', [])]
         if monthly: txt += [f'Or chip in {site.get("supporter_label", "monthly")} to keep these emails coming (cancel anytime): {monthly}']
+        if backers: txt += [f'Kept going by {", ".join(backers)}. Thank you!']
         txt += ['', 'Drive safe,', 'DC Traffic Cameras Map Team', site_url, '', '--',
                 f'Last data: {last}. DDOT publishes each month\'s ticket counts around the 10th of the next month. Dollar figures use the lowest '
-                f'fine for each camera type. You signed up for Ward {w} on the map; to switch wards, sign up again. To unsubscribe, reply with the word unsubscribe.']
+                f'fine for each camera type. You signed up for Ward {w} on the map; to switch wards, sign up again. To unsubscribe, reply with the word unsubscribe.'
+                + (f' Monthly supporters can cancel anytime: {manage}' if manage else '')]
         issue['wards'][w] = dict(subject=subject, html=html, text='\n'.join(txt))
     out = docs / 'letter'; out.mkdir(exist_ok=True)
     (out / 'latest.json').write_text(json.dumps(issue, ensure_ascii=False, separators=(',', ':')))
