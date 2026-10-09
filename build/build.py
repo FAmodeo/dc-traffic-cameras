@@ -70,6 +70,7 @@ cams = pd.DataFrame([f['properties'] for f in json.load(open(DATA / 'cameras.geo
 # 'include' shows a camera of a type otherwise left out. 'credit' thanks whoever reported it (first name + initial, or 'a visitor').
 COR = pd.read_csv(DATA / 'corrections.csv', dtype=str).fillna('') if (DATA / 'corrections.csv').exists() else pd.DataFrame(columns=['camera_id', 'action', 'lat', 'lon', 'credit'])
 for col in ('type', 'location', 'ward', 'added'): COR[col] = COR[col] if col in COR else ''
+COR['action'] = COR.action.str.strip().str.lower()   # 'Move' or ' move' still counts as move
 INCLUDE = set(COR[COR.action == 'include'].camera_id)
 cams = cams[(cams.ENFORCEMENT_TYPE != 'Truck Restriction') | cams.ENFORCEMENT_SPACE_CODE.isin(INCLUDE)].reset_index(drop=True)   # trucks only where included
 tab = pd.read_csv(DATA / 'cameras_table.csv', usecols=['ENFORCEMENT_SPACE_CODE', 'START_DATE', 'ENFORCEMENT_TYPE', 'CAMERA_LATITUDE'])
@@ -350,7 +351,7 @@ for c in recs:
             f'<p>Fine if caught: {FINE.get(c["t"], "see DDOT")}. Cameras run 24/7. Ticket counts come from DDOT and cover {E(meta["window"])}.</p>\n{table}'
             f'<h2>Nearby cameras</h2><ul>{nearby}</ul>')
     fx = c.get('fix')
-    if fx and fx.get('by'): body += f'<p class="credit">{ {"move": "Location corrected", "include": "Added to the map", "report": "Reported"}[fx["a"]] } thanks to {E(fx["by"].rstrip("."))}. Thank you!</p>'
+    if fx and fx.get('by'): body += f'<p class="credit">{ {"move": "Location corrected", "include": "Added to the map", "report": "Reported"}.get(fx["a"], "Corrected") } thanks to {E(fx["by"].rstrip("."))}. Thank you!</p>'
     redirect = f'<script>if(location.hash==="#map")location.replace("{go}")</script>\n'
     d = CDIR / slug; d.mkdir()
     (d / 'index.html').write_text(cpage(path, title, desc, body + count_js(f'/c/{slug}/'), redirect=redirect))

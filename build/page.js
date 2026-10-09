@@ -162,7 +162,7 @@ function keyRow(host, k, info, glyphEl, n) {
   b.onclick = () => { if (poster) return; on[k] = !on[k]; b.setAttribute('aria-pressed', on[k]); applyFilter(); };
   host.appendChild(b);
 }
-for (const t of KEYTYPES) keyRow(document.getElementById('keysType'), t, TYPES[t], mini(t, 'live', 6), count(c => c.t === t));
+for (const t of KEYTYPES) keyRow(document.getElementById('keysType'), t, TYPES[t], mini(t, 'live', 6), count(c => c.t === t && c.s !== 'unv'));
 for (const s of KEYSTATS) keyRow(document.getElementById('keysStat'), s, STATS[s], mini('spd', s, 6), count(c => c.s === s));
 document.getElementById('sizes').innerHTML = [1000, 10000, 40000, 90000].map(v => {
   const r = rad(v) * 1.15; return `<figure><svg viewBox="${-r - 2} ${-r - 2} ${2 * r + 4} ${2 * r + 4}" width="${(2 * r + 4) / 15}rem" aria-hidden="true"><circle r="${r}" fill="var(--muted)"/></svg><span class="num">${v / 1000}k</span></figure>`;
@@ -172,7 +172,7 @@ document.getElementById('unmapped').innerHTML = `<p><strong>${(um['Clear Lane'] 
 function stats() {
   const v = cams.filter(vis);
   document.getElementById('tot').textContent = v.filter(c => c.s !== 'unv').length;
-  for (const t of KEYTYPES) document.querySelector(`#key-${t} .kn`).textContent = count(c => c.t === t && on[c.s]);
+  for (const t of KEYTYPES) document.querySelector(`#key-${t} .kn`).textContent = count(c => c.t === t && on[c.s] && c.s !== 'unv');
   for (const k of KEYSTATS) document.querySelector(`#key-${k} .kn`).textContent = count(c => c.s === k && on[c.t]);
   document.getElementById('split').innerHTML = KEYSTATS.filter(s => on[s]).map(s => `<span><b class="num">${v.filter(c => c.s === s).length}</b> ${STATS[s].name.toLowerCase()}</span>`).join('');
 }
@@ -412,7 +412,7 @@ const recent = d => d && (new Date(meta.asof_iso) - new Date(d)) / 864e5 <= 92;
 const FLOOR = {spd:100, red:150, stp:100, trk:0};   // lowest fine per type, as in the citywide $ figure
 let WIN = 12;   // months shown in the ward list
 const winN = c => (c.m || []).slice(-WIN).reduce((a, v) => a + v, 0);
-const usd = v => v >= 1e6 ? `$${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M` : `$${Math.round(v / 1e3)}k`;
+const usd = v => v >= 999500 ? `$${(v / 1e6).toFixed(v >= 9.95e6 ? 0 : 1)}M` : `$${Math.round(v / 1e3)}k`;
 for (const w of WARDS) {
   const band = cams.filter(c => c.ward === w).sort((a, b) => (b.n || 0) - (a.n || 0));
   const box = document.createElement('div'); box.className = 'ward';
@@ -446,7 +446,7 @@ function wardRefresh() {
     W.svg.innerHTML = ''; W.svg.setAttribute('viewBox', `0 0 ${mx} 10`);
     let x = 0;
     for (const t in TYPES) { const n = v.filter(c => c.t === t).length; if (!n) continue; el('rect', {x, y:0, width:Math.max(n - .35, .3), height:10, fill:`var(--${t})`}, W.svg); x += n; }
-    W.wn.textContent = `${v.length} cameras · ${big(v.reduce((a, c) => a + winN(c), 0))} fines · ${usd(v.reduce((a, c) => a + winN(c) * FLOOR[c.t], 0))}`;
+    W.wn.textContent = `${v.filter(c => c.s !== 'unv').length} cameras · ${big(v.reduce((a, c) => a + winN(c), 0))} fines · ${usd(v.reduce((a, c) => a + winN(c) * FLOOR[c.t], 0))}`;
     W.more.hidden = v.length <= 3;
     W.more.textContent = open ? 'Show top 3' : `Show all ${v.length}`;
   }
@@ -540,7 +540,7 @@ function select(id, fromOutside) {
     ${CLICK_MODE === 'lens' ? '<svg class="lens" aria-hidden="true"></svg>' : ''}
     <div class="pop-h"><span class="pg"></span><b>${c.loc}</b>${what}</div>
     <div class="pop-sub">${sub.join('<i class="dot"></i>')}</div>
-    ${c.fix && c.fix.by ? `<div class="pop-fix">${({move:'Location corrected', include:'Added to the map', report:'Reported'})[c.fix.a]} thanks to ${c.fix.by.replace(/\.$/, '')}. Thank you!</div>` : ''}
+    ${c.fix && c.fix.by ? `<div class="pop-fix">${({move:'Location corrected', include:'Added to the map', report:'Reported'})[c.fix.a] || 'Corrected'} thanks to ${c.fix.by.replace(/\.$/, '')}. Thank you!</div>` : ''}
     <div class="pop-stats">
       <div><b>${c.n ? fmt(c.n) : '0'}</b><span>fines, 12 months</span></div>
       <div><b>${ev ? '1 / ' + ev : '—'}</b><span>${ev ? 'on average' : c.s === 'live' ? 'no fines logged' : 'not fining yet'}</span></div>
@@ -660,7 +660,8 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
       body:new URLSearchParams({[S2.note_entry]:`[monthly email] Ward ${w}`, [S2.note_email_entry]:em})}); }
     catch (err) { send.disabled = false; send.textContent = 'Retry'; return; }
     row.hidden = true; form.querySelector('.nl-lab').hidden = true; done.hidden = false;
-    done.innerHTML = `You're in. Last month's numbers for Ward ${w} are on their way to your inbox.<span>Not there in a few minutes? Check spam or promotions.</span>`;
+    done.innerHTML = `You're in for Ward ${w}. Last month's numbers should reach your inbox shortly, and the next issue comes mid-month.<span>Nothing yet? Check promotions or spam.</span>`;
+    done.tabIndex = -1; done.focus();
   };
   const fl = document.getElementById('footMonthly'); if (fl) fl.onclick = e => { e.preventDefault(); form.scrollIntoView({block:'center'}); mail.focus({preventScroll:true}); };
 })();

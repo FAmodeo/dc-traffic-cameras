@@ -15,7 +15,7 @@ SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-
 MONO = "'SF Mono',Menlo,Consolas,monospace"
 
 
-def usd(v): return f'${v / 1e6:.1f}M' if v >= 1e6 else f'${round(v / 1e3)}k'
+def usd(v): return f'${v / 1e6:.1f}M' if v >= 999_500 else f'${round(v / 1e3)}k'   # 999,600 reads $1.0M, never $1000k
 def mname(ym, full=True): return dt.date(int(ym[:4]), int(ym[5:]), 1).strftime('%B %Y' if full else '%B')
 def cap(s): return s[:1].upper() + s[1:]
 def pct(a, b):
@@ -33,12 +33,16 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
     else:   # first run: as if this data month arrived on the 12th of the following month
         nxt = dt.date(int(cur[:4]) + (cur[5:] == '12'), int(cur[5:]) % 12 + 1, 12)
         state = dict(month=cur, rolled=nxt.isoformat(), cams=snap, prev=None)
-    if state['month'] != cur:
-        state = dict(month=cur, rolled=fetched.isoformat(), cams=snap, prev=dict(month=state['month'], rolled=state['rolled'], cams=state['cams']))
+    if state['month'] != cur:   # new data month: the snapshot and credits of the issue just sent become the baseline
+        state = dict(month=cur, rolled=fetched.isoformat(), cams=snap,
+                     prev=dict(month=state['month'], rolled=state['rolled'], cams=state['cams']))
     state['cams'] = snap
+    state.pop('credited', None)
     path.write_text(json.dumps(state, separators=(',', ':')) + '\n')
     prev = state['prev']
-    since = prev['rolled'] if prev else state['rolled']
+    # credits: corrections added after the previous data month arrived and up to this one's arrival; a fix made after
+    # that waits for next month's issue, so nobody is thanked twice
+    since, until = (prev['rolled'] if prev else ''), state['rolled']
 
     site_url = site['site_url'].rstrip('/') + '/'
     url = lambda cid: f'{site_url}c/{cid.replace(" ", "").lower()}/'
@@ -49,22 +53,27 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
 
     # what changed, per ward: (tag, location, type)
     news = {w: [] for w in WARDS}
-    credited = {o.camera_id for o in cor.itertuples() if (o.added or '') > since}
+    credited = {o.camera_id for o in cor.itertuples() if since < (o.added or '') <= until}
     if prev:
         old = prev['cams']
+        gone_unv = [(v[0], v[1]) for k, v in old.items() if k not in snap and v[2] == 'unv']   # reports dropped once DDOT lists them
+        near_report = lambda x, y: any(math.hypot(x - a, y - b) * 1609.344 / 100 < 150 for a, b in gone_unv)
         for cid, (x, y, s, w, loc, t) in snap.items():
+            if cid in credited and cid not in old: continue   # shown under "Fixed thanks to readers"
             if cid not in old:
-                news[w].append(('Reported' if s == 'unv' else 'New', loc, 'unv' if s == 'unv' else t, cid)); continue
+                tg = 'Reported' if s == 'unv' else 'Confirmed' if near_report(x, y) else 'New'
+                news[w].append((tg, loc, 'unv' if s == 'unv' else t, cid)); continue
             ox, oy, os_ = old[cid][:3]
             if os_ != s and s == 'live': news[w].append(('Now ticketing', loc, t, cid))
             elif os_ != s and s == 'warn': news[w].append(('Warning period', loc, t, cid))
             elif os_ == 'unv' and s != 'unv': news[w].append(('Confirmed', loc, t, cid))
             if cid not in credited and math.hypot(x - ox, y - oy) * 1609.344 / 100 > 50: news[w].append(('Moved', loc, t, cid))
         for cid, (x, y, s, w, loc, t) in old.items():
-            if cid not in snap: news[w].append(('Removed', loc, t, None))
+            if cid not in snap and s != 'unv': news[w].append(('Removed', loc, t, None))
     by_id = {c['id']: c for c in recs}
-    thanks = [(by_id[o.camera_id], {'move': 'moved', 'include': 'added', 'report': 'reported'}.get(o.action, 'fixed'), o.credit.rstrip('.'))
+    thanks = [(by_id[o.camera_id], {'move': 'moved', 'include': 'added', 'report': 'reported'}.get(o.action, 'fixed'), o.credit.strip() or 'a visitor')
               for o in cor.itertuples() if o.camera_id in credited and o.camera_id in by_id]
+
 
     city, city_b = sum(tot.values()), sum(c['m'][-2] for c in real)
     city_usd = sum(c['m'][-1] * FL[c['t']] for c in real)
@@ -114,7 +123,7 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
                 f'<div style="font:600 11px/1 {MONO};letter-spacing:.12em;text-transform:uppercase;color:{ACC}">DC Traffic Cameras · Ward {w}</div>'
                 f'<div style="margin:8px 0 16px;font:800 24px/1.15 {SANS};color:#ffffff">Last month in Ward {w}</div>'
                 '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>'
-                + stat(f'{n:,}', 'tickets') + stat(usd(money), 'in fines') + stat(pct(n, nb), f'vs {before}', '0') + '</tr></table>'
+                + stat(f'{n:,}', 'tickets') + stat(usd(money), 'in fines', '0' if not nb else '22px') + (stat(pct(n, nb), f'vs {before}', '0') if nb else '') + '</tr></table>'
                 f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:18px;table-layout:fixed">'
                 f'<tr>{bars}</tr><tr>{ticks}</tr></table>'
                 f'<div style="margin-top:10px;font:400 12px/1.4 {SANS};color:#9aa1a8">Tickets per month, {mname(months[0])} to {last}. '
@@ -148,7 +157,7 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
                 f'border-radius:10px;padding:20px;font:400 15px/1.5 {SANS};color:{INK}">' + '\n'.join(parts) + '</div>'
                 f'<p style="max-width:560px;margin:14px auto 0;font:400 11.5px/1.5 {SANS};color:{MUTED}">{fine}</p></div>')
 
-        txt = ['{{INTRO}}', f'LAST MONTH IN WARD {w}', '', f'{n:,} tickets · {usd(money)} in fines · {pct(n, nb)} vs {before}',
+        txt = ['{{INTRO}}', f'LAST MONTH IN WARD {w}', '', f'{n:,} tickets · {usd(money)} in fines' + (f' · {pct(n, nb)} vs {before}' if nb else ''),
                f'Ward {w} ranks {ordinal(rank)} of DC\'s 8 wards.', '', 'Busiest cameras:']
         txt += [f'- {c["loc"]} ({KINDS[c["t"]]}): {c["m"][-1]:,}  {url(c["id"])}' for c in top]
         if what: txt += ['', "What's new:"] + [f'- {tg}: {loc}' for tg, loc, t, cid in news[w]] + [f'- Heads-up, warning period: {c["loc"]}' for c in heads]
