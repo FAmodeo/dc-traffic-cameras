@@ -295,12 +295,17 @@ table.fines{width:100%;border-collapse:collapse;font-size:.8rem}
 .tip a{color:var(--ink);font-weight:700}
 .posterfoot{display:none;font-size:.72rem;color:var(--muted)}
 /* monthly ward email sign-up, under the ward list */
-.nl{margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--hair)}
+.nl{margin:0 0 .8rem;padding:.7rem .8rem .75rem;border:1px solid var(--hair);border-radius:6px;background:var(--land)}
+.hero-r{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.nl-top{color:var(--ink);text-decoration:none;border-color:var(--ink-2);cursor:pointer}
+.nl-top:hover{background:var(--land)}
+.nl-top:focus-visible{outline:2px solid var(--spd);outline-offset:2px}
+html.poster .nl-top,html.cardmode .nl-top{display:none}
 .nl-lab{margin:0 0 .5rem;font-size:.82rem;color:var(--ink-2)}
 .nl-lab b{color:var(--ink)}
 .nl-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:.4rem}
 .nl-row input,.nl-row select{box-sizing:border-box;min-width:0;font:400 16px/1.2 var(--f-display);color:var(--ink);background:var(--land);border:1px solid var(--hair);border-radius:4px;padding:.42rem .5rem}
-.nl-row select{max-width:11.5rem}
+.nl-row select{max-width:17rem}
 .nl-row input:focus,.nl-row select:focus{outline:2px solid var(--spd);outline-offset:0;border-color:transparent}
 @media (pointer:fine){.nl-row input,.nl-row select{font-size:.85rem}}
 .nl-row button{font:700 .82rem/1 var(--f-display);padding:.5rem .95rem .42rem;border-radius:4px;border:0;background:var(--ink);color:var(--bg);cursor:pointer}
@@ -476,7 +481,7 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
       <p class="dek">Every speed, red-light and stop-sign camera. Where it watches. How often it fines.</p>
       <div class="cta"><a class="btn primary" href="#explore">Explore the map</a><a class="btn" href="#closeup">Your neighbourhood</a><button class="btn ghost" id="share" type="button">Share</button><a class="btn tip" id="tipBtn" href="#" target="_blank" rel="noopener" hidden><i aria-hidden="true">☕</i><span>Buy me a coffee</span></a></div>
     </div>
-    <div class="stamp" id="stamp"></div>
+    <div class="hero-r"><div class="stamp" id="stamp"></div><a class="stamp nl-top" id="nlTop" href="#nl" hidden><span aria-hidden="true">✉</span> Your ward, monthly by email</a></div>
   </header>
 
   <noscript><style>.hits,.explore,.lower,.cta,.stamp{display:none}</style><p class="nojs">This map needs JavaScript to draw the cameras and figures.</p></noscript>
@@ -549,12 +554,6 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
       <div class="pick"><label for="hood" class="lab">Close-up</label><select id="hood"></select></div>
       <h2 class="sec" id="insetTitle"></h2>
       <p class="sub" id="insetCap"></p>
-      <svg id="inset" role="img" aria-label="Close-up map of the cameras in one neighbourhood"></svg>
-    </section>
-    <section class="wards">
-      <h2 class="sec">By ward</h2>
-      <p class="sub">Top 3 per ward<i class="dot"></i>fines and $ in the last <span class="wwin" id="wwin" role="group" aria-label="Months"><button type="button" data-m="3" aria-pressed="false">3</button><button type="button" data-m="6" aria-pressed="false">6</button><button type="button" data-m="12" aria-pressed="true">12</button></span> months</p>
-      <div id="wards"></div>
       <form class="nl" id="nl" hidden>
         <p class="nl-lab"><b>Your ward, every month.</b> Tickets, fines and camera changes, by email. Free; unsubscribe anytime.</p>
         <div class="nl-row">
@@ -565,6 +564,12 @@ html.cardmode .ticket,html.cardmode .suggest,html.cardmode .hits,html.cardmode .
         <input class="vh" id="nlWeb" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <p class="nl-done" id="nlDone" hidden role="status"></p>
       </form>
+      <svg id="inset" role="img" aria-label="Close-up map of the cameras in one neighbourhood"></svg>
+    </section>
+    <section class="wards">
+      <h2 class="sec">By ward</h2>
+      <p class="sub">Top 3 per ward<i class="dot"></i>fines and $ in the last <span class="wwin" id="wwin" role="group" aria-label="Months"><button type="button" data-m="3" aria-pressed="false">3</button><button type="button" data-m="6" aria-pressed="false">6</button><button type="button" data-m="12" aria-pressed="true">12</button></span> months</p>
+      <div id="wards"></div>
       <div class="posterfoot" id="posterfoot"></div>
     </section>
   </section>
@@ -663,7 +668,7 @@ function chevron(parent, c) {
 }
 
 /* ---------- header + legend ---------- */
-document.getElementById('stamp').textContent = `DDOT data · updated ${meta.asof}`;
+document.getElementById('stamp').textContent = `DDOT data · ${meta.asof}`;
 
 /* ---------- landing figures ---------- */
 const S = meta.stats;
@@ -981,6 +986,10 @@ function drawInset() {
   }
   const name = hood.capitol ? 'Capitol Hill' : hood.n;
   document.getElementById('insetTitle').textContent = name;
+  if (window.nlPrefill) {   // the sign-up box suggests the ward of the neighbourhood on show: cameras within 0.8 mi, nearer ones count more
+    const wt = {}; for (const c of cams) { const d = Math.hypot(c.x - hx, c.y - hy); if (c.s !== 'unv' && d <= 80) wt[c.ward] = (wt[c.ward] || 0) + 1 / (d + 15); }
+    const best = Object.keys(wt).sort((a, b) => wt[b] - wt[a])[0]; if (best) window.nlPrefill(best);
+  }
   const nSpd = ic.filter(c => c.t === 'spd').length;
   document.getElementById('insetCap').textContent = `${ic.length} camera${ic.length === 1 ? '' : 's'} within 1.2 mi${nSpd ? `; badges show the speed limit` : ''}`;
 }
@@ -1237,6 +1246,10 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
                 'Brookland, Trinidad', 'Capitol Hill, Navy Yard', 'Deanwood, Benning', 'Anacostia, Congress Heights'];
   ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} (${h})</option>`).join(''));
   form.hidden = false;
+  let picked = false; ward.addEventListener('change', () => { picked = true; });
+  window.nlPrefill = w => { if (!picked && /^[1-8]$/.test(String(w))) ward.value = String(w); };
+  const top = document.getElementById('nlTop'); top.hidden = false;
+  top.onclick = e => { e.preventDefault(); form.scrollIntoView({block:'center', behavior:calm ? 'auto' : 'smooth'}); mail.focus({preventScroll:true}); };
   form.onsubmit = async e => {
     e.preventDefault(); const em = mail.value.trim(), w = ward.value; if (!em || !w) return;
     send.disabled = true; send.textContent = 'Signing up…';

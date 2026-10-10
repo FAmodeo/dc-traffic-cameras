@@ -79,7 +79,7 @@ function chevron(parent, c) {
 }
 
 /* ---------- header + legend ---------- */
-document.getElementById('stamp').textContent = `DDOT data · updated ${meta.asof}`;
+document.getElementById('stamp').textContent = `DDOT data · ${meta.asof}`;
 
 /* ---------- landing figures ---------- */
 const S = meta.stats;
@@ -397,6 +397,10 @@ function drawInset() {
   }
   const name = hood.capitol ? 'Capitol Hill' : hood.n;
   document.getElementById('insetTitle').textContent = name;
+  if (window.nlPrefill) {   // the sign-up box suggests the ward of the neighbourhood on show: cameras within 0.8 mi, nearer ones count more
+    const wt = {}; for (const c of cams) { const d = Math.hypot(c.x - hx, c.y - hy); if (c.s !== 'unv' && d <= 80) wt[c.ward] = (wt[c.ward] || 0) + 1 / (d + 15); }
+    const best = Object.keys(wt).sort((a, b) => wt[b] - wt[a])[0]; if (best) window.nlPrefill(best);
+  }
   const nSpd = ic.filter(c => c.t === 'spd').length;
   document.getElementById('insetCap').textContent = `${ic.length} camera${ic.length === 1 ? '' : 's'} within 1.2 mi${nSpd ? `; badges show the speed limit` : ''}`;
 }
@@ -653,6 +657,10 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
                 'Brookland, Trinidad', 'Capitol Hill, Navy Yard', 'Deanwood, Benning', 'Anacostia, Congress Heights'];
   ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} (${h})</option>`).join(''));
   form.hidden = false;
+  let picked = false; ward.addEventListener('change', () => { picked = true; });
+  window.nlPrefill = w => { if (!picked && /^[1-8]$/.test(String(w))) ward.value = String(w); };
+  const top = document.getElementById('nlTop'); top.hidden = false;
+  top.onclick = e => { e.preventDefault(); form.scrollIntoView({block:'center', behavior:calm ? 'auto' : 'smooth'}); mail.focus({preventScroll:true}); };
   form.onsubmit = async e => {
     e.preventDefault(); const em = mail.value.trim(), w = ward.value; if (!em || !w) return;
     send.disabled = true; send.textContent = 'Signing up…';
