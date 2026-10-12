@@ -199,6 +199,8 @@ hood_pts = sorted(({'n': f['properties']['NAME'], 'x': round(P(*f['geometry']['c
                   key=lambda h: h['n'])
 official = {h['n']: h for h in hood_pts}
 for c in recs: c['hood'] = min(hood_pts, key=lambda h: (h['x'] - c['x']) ** 2 + (h['y'] - c['y']) ** 2)['n']
+LABEL = {o.camera_id: o.location.strip() for o in COR[COR.action == 'label'].itertuples() if o.location.strip()}
+for c in recs: c['hood'] = LABEL.get(c['id'], c['hood'])   # 'label': hand-checked neighbourhood where the nearest label point misleads
 for c in recs:   # reported cameras without a ward take the ward of the nearest listed camera
     if not c['ward']: c['ward'] = min((o for o in recs if o['ward']), key=lambda o: (o['x'] - c['x']) ** 2 + (o['y'] - c['y']) ** 2)['ward']
 ALIAS_HOOD = {'Anacostia': 'Historic Anacostia'}
@@ -351,7 +353,7 @@ for c in recs:
             f'<p>Fine if caught: {FINE.get(c["t"], "see DDOT")}. Cameras run 24/7. Ticket counts come from DDOT and cover {E(meta["window"])}.</p>\n{table}'
             f'<h2>Nearby cameras</h2><ul>{nearby}</ul>')
     fx = c.get('fix')
-    if fx and fx.get('by'): body += f'<p class="credit">{ {"move": "Location corrected", "include": "Added to the map", "report": "Reported"}.get(fx["a"], "Corrected") } thanks to {E(fx["by"].rstrip("."))}. Thank you!</p>'
+    if fx and fx.get('by'): body += f'<p class="credit">{ {"move": "Location corrected", "include": "Added to the map", "report": "Reported", "label": "Neighbourhood corrected"}.get(fx["a"], "Corrected") } thanks to {E(fx["by"].rstrip("."))}. Thank you!</p>'
     redirect = f'<script>if(location.hash==="#map")location.replace("{go}")</script>\n'
     d = CDIR / slug; d.mkdir()
     (d / 'index.html').write_text(cpage(path, title, desc, body + count_js(f'/c/{slug}/'), redirect=redirect))

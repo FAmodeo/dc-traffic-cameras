@@ -1,3 +1,5 @@
 camera_id,action,lat,lon,credit,reason,type,location,ward,added
 ATE 0867,move,38.89005,-76.93278,a visitor,DDOT's description is '49th St s/b @ E Capitol St NE' but its coordinates sit ~750 m east; placed on 49th St just north of E Capitol (southbound approach). Reported Oct 2026.,,,,2026-10-08
 ATE 0875,include,,,two visitors,"DDOT types it Truck Restriction (a type left off the map); two visitors reported it at 33rd & O St NW. Shown alone, labelled as DDOT has it. Oct 2026.",,,,2026-10-08
+ATE 0175,label,,,a visitor,"Neighbourhood label: the nearest-label rule said Mass. Ave. Heights; the camera is on Wisconsin Ave beside the Russian Embassy, Glover Park side (reader note, 9 Oct 2026).",,Glover Park,,2026-10-12
+ATE 0176,label,,,a visitor,"Neighbourhood label: the nearest-label rule said Mass. Ave. Heights; the camera is on Wisconsin Ave beside the Russian Embassy, Glover Park side (reader note, 9 Oct 2026).",,Glover Park,,2026-10-12

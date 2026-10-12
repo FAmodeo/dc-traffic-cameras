@@ -544,7 +544,7 @@ function select(id, fromOutside) {
     ${CLICK_MODE === 'lens' ? '<svg class="lens" aria-hidden="true"></svg>' : ''}
     <div class="pop-h"><span class="pg"></span><b>${c.loc}</b>${what}</div>
     <div class="pop-sub">${sub.join('<i class="dot"></i>')}</div>
-    ${c.fix && c.fix.by ? `<div class="pop-fix">${({move:'Location corrected', include:'Added to the map', report:'Reported'})[c.fix.a] || 'Corrected'} thanks to ${c.fix.by.replace(/\.$/, '')}. Thank you!</div>` : ''}
+    ${c.fix && c.fix.by ? `<div class="pop-fix">${({move:'Location corrected', include:'Added to the map', report:'Reported', label:'Neighbourhood corrected'})[c.fix.a] || 'Corrected'} thanks to ${c.fix.by.replace(/\.$/, '')}. Thank you!</div>` : ''}
     <div class="pop-stats">
       <div><b>${c.n ? fmt(c.n) : '0'}</b><span>fines, 12 months</span></div>
       <div><b>${ev ? '1 / ' + ev : '—'}</b><span>${ev ? 'on average' : c.s === 'live' ? 'no fines logged' : 'not fining yet'}</span></div>

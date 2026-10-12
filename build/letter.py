@@ -71,8 +71,16 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
         for cid, (x, y, s, w, loc, t) in old.items():
             if cid not in snap and s != 'unv': news[w].append(('Removed', loc, t, None))
     by_id = {c['id']: c for c in recs}
-    thanks = [(by_id[o.camera_id], {'move': 'moved', 'include': 'added', 'report': 'reported'}.get(o.action, 'fixed'), o.credit.strip() or 'a visitor')
+    thanks = [(by_id[o.camera_id], {'move': 'moved', 'include': 'added', 'report': 'reported', 'label': 'relabelled'}.get(o.action, 'fixed'), o.credit.strip() or 'a visitor')
               for o in cor.itertuples() if o.camera_id in credited and o.camera_id in by_id]
+    # one line per spot: the same fix on both directions of a street reads "both directions"
+    merged, seen = [], {}
+    for c, how, who in thanks:
+        base = c['loc'].rsplit(', ', 1)[0] if c['loc'].endswith('bound') else c['loc']
+        k = (base, how, who)
+        if k in seen: merged[seen[k]] = (dict(merged[seen[k]][0], loc=f'{base}, both directions'), how, who)
+        else: seen[k] = len(merged); merged.append((c, how, who))
+    thanks = merged
 
 
     city, city_b = sum(tot.values()), sum(c['m'][-2] for c in real)
