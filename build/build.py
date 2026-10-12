@@ -89,7 +89,7 @@ cams['t12'] = cams.ENFORCEMENT_SPACE_CODE.map(t12)
 
 DIRS = {'N': 'northbound', 'S': 'southbound', 'E': 'eastbound', 'W': 'westbound', 'NE': 'northeast-bound',
         'NW': 'northwest-bound', 'SE': 'southeast-bound', 'SW': 'southwest-bound'}
-KEEP = {'NW', 'NE', 'SE', 'SW', 'DC295', 'I', 'US', 'BW', 'I-295', 'I-695', 'I-395'}
+KEEP = {'NW', 'NE', 'SE', 'SW', 'DC295', 'I', 'US', 'BW', 'I-295', 'I-695', 'I-395', 'MLK'}
 
 
 def pretty(s):
