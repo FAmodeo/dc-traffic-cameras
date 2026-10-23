@@ -29,6 +29,9 @@
     }
   ],
   "newsletter": true,
+  "newsletter_url": "",
+  "newsletter_price": "$3.99 a month",
+  "newsletter_free_until": "November",
   "supporter_url": "https://buy.stripe.com/aFa00l77IaSO0i83XR4ow05",
   "supporter_label": "$1.99 a month",
   "supporter_manage": "https://billing.stripe.com/p/login/7sYeVffEe5yugh61PJ4ow00"

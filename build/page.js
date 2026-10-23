@@ -622,7 +622,7 @@ if (meta.site.tip_url) {
   document.getElementById('tkAmts').innerHTML = amts.map(a => `<a class="tk-pay" href="${a.url}" target="_blank" rel="noopener">${a.label}</a>`).join(''); tk.hidden = false;
   const t = document.getElementById('tip'); t.innerHTML = `Free, no ads, no tracking. Saved you a ticket? ${A(meta.site.tip_url, meta.site.tip_label)}.`; t.hidden = false;
 }
-if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${NLISTED} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.newsletter && meta.site.note_form ? ` · <a id="footMonthly" href="#nl">Monthly email for your ward</a>` : '') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
+if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c/">All ${NLISTED} cameras, listed</a> · ` + A(meta.site.repo_url, 'Code, data and method') + (meta.site.newsletter && (meta.site.note_form || meta.site.newsletter_url) ? ` · <a id="footMonthly" href="#nl">Monthly email for your ward</a>` : '') + (meta.site.feedback_url || meta.site.note_form ? ` · <a id="footSuggest" href="${meta.site.note_form ? '#suggest' : meta.site.feedback_url}"${meta.site.note_form ? '' : ' target="_blank" rel="noopener"'}>Suggest a fix or an idea</a>` : '');
 // suggestion box: with a Google Form configured, notes post in place (no account, no redirect); else the GitHub form
 (function suggest() {
   const S2 = meta.site, box = document.getElementById('suggest'), open = document.getElementById('sgOpen'), form = document.getElementById('sgForm');
@@ -647,15 +647,20 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
   };
 })();
 
-// monthly ward email: sign-ups post to the same Google Form as suggestions, marked "[monthly email] Ward N"; the
-// Apps Script in the project account files them separately and sends the latest issue at once
+// monthly ward email. Paid (newsletter_url set): the box opens the Stripe link with the ward and email filled in; the
+// Apps Script finds the new subscription within the hour and sends the latest issue. Until then, sign-ups post to the
+// same Google Form as suggestions, marked "[monthly email] Ward N", and the box states when the free issues end.
 (function newsletter() {
-  const S2 = meta.site; if (!S2.newsletter || !S2.note_form || !S2.note_email_entry || poster || cardmode) return;
+  const S2 = meta.site, paid = S2.newsletter_url; if (!S2.newsletter || (!paid && (!S2.note_form || !S2.note_email_entry)) || poster || cardmode) return;
   const form = document.getElementById('nl'), mail = document.getElementById('nlMail'), ward = document.getElementById('nlWard'),
         send = document.getElementById('nlSend'), done = document.getElementById('nlDone'), row = form.querySelector('.nl-row');
   const HINT = ['Columbia Heights, Adams Morgan', 'Downtown, Dupont, Georgetown', 'Cleveland Park, Tenleytown', 'Petworth, Takoma',
                 'Brookland, Trinidad', 'Capitol Hill, Navy Yard', 'Deanwood, Benning', 'Anacostia, Congress Heights'];
   ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} (${h})</option>`).join(''));
+  const price = S2.newsletter_price || '', weekly = parseFloat(price.replace(/[^\d.]/g, '')) * 12 / 52;
+  document.getElementById('nlTerms').textContent = paid ? `${price}${weekly < 1 ? ', under $1 a week' : ''}. Cancel anytime.`
+    : S2.newsletter_free_until && price ? `Free through the ${S2.newsletter_free_until} issue, then ${price} if you subscribe. Unsubscribe anytime.` : 'Free; unsubscribe anytime.';
+  if (paid) send.textContent = 'Subscribe';
   form.hidden = false;
   let picked = false; ward.addEventListener('change', () => { picked = true; });
   window.nlPrefill = w => { if (!picked && /^[1-8]$/.test(String(w))) ward.value = String(w); };
@@ -663,6 +668,11 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
   top.onclick = e => { e.preventDefault(); form.scrollIntoView({block:'center', behavior:calm ? 'auto' : 'smooth'}); mail.focus({preventScroll:true}); };
   form.onsubmit = async e => {
     e.preventDefault(); const em = mail.value.trim(), w = ward.value; if (!em || !w) return;
+    if (paid) {   // Stripe's checkout in a new tab; opened inside the submit so it is not blocked as a pop-up
+      window.open(`${paid}?${new URLSearchParams({prefilled_email:em, client_reference_id:`ward-${w}`})}`, '_blank', 'noopener');
+      done.hidden = false; done.innerHTML = `Finish on Stripe's page.<span>Ward ${w}'s latest issue arrives within the hour after you pay.</span>`;
+      return;
+    }
     send.disabled = true; send.textContent = 'Signing up…';
     try { if (!document.getElementById('nlWeb').value) await fetch(S2.note_form, {method:'POST', mode:'no-cors',
       body:new URLSearchParams({[S2.note_entry]:`[monthly email] Ward ${w}`, [S2.note_email_entry]:em})}); }

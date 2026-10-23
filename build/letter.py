@@ -85,7 +85,8 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
 
     city, city_b = sum(tot.values()), sum(c['m'][-2] for c in real)
     city_usd = sum(c['m'][-1] * FL[c['t']] for c in real)
-    monthly, manage = site.get('supporter_url'), site.get('supporter_manage')
+    paid = site.get('newsletter_url')   # paid email: the $1.99 supporter line gives way to the subscription
+    monthly, manage = (None if paid else site.get('supporter_url')), site.get('supporter_manage')
     sp = data / 'supporters.csv'   # monthly supporters who typed a name for the thanks line (first name + initial)
     backers = [l.split(',')[0].strip() for l in sp.read_text().splitlines()[1:] if l.strip()] if sp.exists() else []
 
@@ -107,7 +108,7 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
     pills = ''.join(f'<a href="{E(a["url"])}" style="display:inline-block;margin:0 6px 6px 0;padding:8px 14px 7px;border:1.5px solid {RED};'
                     f'border-radius:999px;color:{RED};font:700 14px/1 {SANS};text-decoration:none">{E(a["label"])}</a>' for a in site.get('tip_amounts', []))
 
-    issue = dict(id=cur, label=last, built=fetched.isoformat(), wards={})
+    issue = dict(id=cur, label=last, built=fetched.isoformat(), subscribe=paid or '', price=site.get('newsletter_price', ''), manage=manage or '', wards={})
     for w in WARDS:
         cs = [c for c in real if str(c['ward']) == w]
         n, nb, money = tot[w], sum(c['m'][-2] for c in cs), sum(c['m'][-1] * FL[c['t']] for c in cs)
@@ -159,8 +160,8 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
         ]
         fine = (f'Last data: {last}. DDOT publishes each month\'s ticket counts around the 10th of the next month. Dollar figures use '
                 f'the lowest fine for each camera type. You get this email because you signed up for Ward {w} on the map; to switch wards, '
-                f'sign up again with the new one. <a href="{{{{UNSUB}}}}" style="color:{MUTED}">Unsubscribe</a>.'
-                + (f' Monthly supporters can <a href="{E(manage)}" style="color:{MUTED}">cancel anytime here</a>.' if manage else ''))
+                + ('reply with the new ward number' if paid else 'sign up again with the new one') + f'. <a href="{{{{UNSUB}}}}" style="color:{MUTED}">Unsubscribe</a>.'
+                + (f' {"Subscribers" if paid else "Monthly supporters"} can <a href="{E(manage)}" style="color:{MUTED}">{"manage or cancel" if paid else "cancel"} anytime here</a>.' if manage else ''))
         html = (f'<div style="background:{BG};padding:20px 10px"><div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid {HAIR};'
                 f'border-radius:10px;padding:20px;font:400 15px/1.5 {SANS};color:{INK}">' + '\n'.join(parts) + '</div>'
                 f'<p style="max-width:560px;margin:14px auto 0;font:400 11.5px/1.5 {SANS};color:{MUTED}">{fine}</p></div>')
@@ -178,8 +179,9 @@ def build(recs, cor, months, fetched, site, docs, data, slugof):
         if backers: txt += [f'Kept going by {", ".join(backers)}. Thank you!']
         txt += ['', 'Drive safe,', 'DC Traffic Cameras Map Team', site_url, '', '--',
                 f'Last data: {last}. DDOT publishes each month\'s ticket counts around the 10th of the next month. Dollar figures use the lowest '
-                f'fine for each camera type. You signed up for Ward {w} on the map; to switch wards, sign up again. To unsubscribe, reply with the word unsubscribe.'
-                + (f' Monthly supporters can cancel anytime: {manage}' if manage else '')]
+                f'fine for each camera type. You signed up for Ward {w} on the map; to switch wards, ' + ('reply with the new ward number' if paid else 'sign up again')
+                + '. To unsubscribe, reply with the word unsubscribe.'
+                + (f' {"Subscribers can manage or cancel" if paid else "Monthly supporters can cancel"} anytime: {manage}' if manage else '')]
         issue['wards'][w] = dict(subject=subject, html=html, text='\n'.join(txt))
     out = docs / 'letter'; out.mkdir(exist_ok=True)
     (out / 'latest.json').write_text(json.dumps(issue, ensure_ascii=False, separators=(',', ':')))
