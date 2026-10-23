@@ -657,9 +657,9 @@ if (meta.site.repo_url) document.getElementById('links').innerHTML = `<a href="c
   const HINT = ['Columbia Heights, Adams Morgan', 'Downtown, Dupont, Georgetown', 'Cleveland Park, Tenleytown', 'Petworth, Takoma',
                 'Brookland, Trinidad', 'Capitol Hill, Navy Yard', 'Deanwood, Benning', 'Anacostia, Congress Heights'];
   ward.insertAdjacentHTML('beforeend', HINT.map((h, i) => `<option value="${i + 1}">Ward ${i + 1} (${h})</option>`).join(''));
-  const price = S2.newsletter_price || '', weekly = parseFloat(price.replace(/[^\d.]/g, '')) * 12 / 52;
-  document.getElementById('nlTerms').textContent = paid ? `${price}${weekly < 1 ? ', under $1 a week' : ''}. Cancel anytime.`
-    : S2.newsletter_free_until && price ? `Free through the ${S2.newsletter_free_until} issue, then ${price} if you subscribe. Unsubscribe anytime.` : 'Free; unsubscribe anytime.';
+  const price = S2.newsletter_price || '', hook = S2.newsletter_hook ? ` (${S2.newsletter_hook})` : '';
+  document.getElementById('nlTerms').textContent = paid ? `${price}${hook}. Cancel anytime.`
+    : S2.newsletter_free_until && price ? `Free through the ${S2.newsletter_free_until} issue, then ${price}${hook} if you subscribe. Unsubscribe anytime.` : 'Free; unsubscribe anytime.';
   if (paid) send.textContent = 'Subscribe';
   form.hidden = false;
   let picked = false; ward.addEventListener('change', () => { picked = true; });
