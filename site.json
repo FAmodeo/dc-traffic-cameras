@@ -29,7 +29,7 @@
     }
   ],
   "newsletter": true,
-  "newsletter_url": "",
+  "newsletter_url": "https://buy.stripe.com/bJe00l0Jk0eac0Qcun4ow06",
   "newsletter_price": "$2.99 a month",
   "newsletter_hook": "half a latte",
   "newsletter_free_until": "November",
